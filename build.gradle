@@ -1,0 +1,36 @@
+buildscript {
+  repositories { jcenter() }
+
+  dependencies {
+    classpath group: 'org.github.ngbinh.scalastyle', name: 'gradle-scalastyle-plugin_2.11', version: '0.8.2'
+  }
+}
+
+apply plugin: 'scala'
+apply plugin: 'eclipse'
+apply plugin: 'scalaStyle'
+
+repositories {
+  mavenCentral()
+}
+
+ext {
+  scala_major_version = '2.11'
+  scala_minor_version = '8'
+  scala_version = scala_major_version + '.' + scala_minor_version
+  scala_suffix = '_' + scala_major_version
+}
+
+tasks.withType(ScalaCompile) {
+  scalaCompileOptions.additionalParameters = ["-feature", "-deprecation"]
+}
+
+scalaStyle {
+  includeTestSourceDirectory = true
+  source = "src/main/scala"
+  testSource = "src/test/scala"
+}
+
+dependencies {
+}
+
