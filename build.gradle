@@ -2,7 +2,7 @@ buildscript {
   repositories { jcenter() }
 
   dependencies {
-    classpath group: 'org.github.ngbinh.scalastyle', name: 'gradle-scalastyle-plugin_2.11', version: '0.8.2'
+    classpath group: 'org.github.ngbinh.scalastyle', name: 'gradle-scalastyle-plugin_2.11', version: '0.7.0'
   }
 }
 
@@ -11,7 +11,7 @@ apply plugin: 'eclipse'
 apply plugin: 'scalaStyle'
 
 repositories {
-  mavenCentral()
+  jcenter()
 }
 
 ext {
@@ -32,5 +32,6 @@ scalaStyle {
 }
 
 dependencies {
+  compile group: 'org.scala-lang', name: 'scala-library', version: scala_version
+  compile group: 'com.typesafe.akka', name: 'akka-actor' + scala_suffix, version: '2.4.10'
 }
-

@@ -1,5 +1,6 @@
 *.class
 *.log
+.cache-main
 
 # Akka specific
 logs/*
@@ -27,3 +28,4 @@ gradle-app.setting
 
 # Scalastyle specific
 .scalastyle
+/bin/
