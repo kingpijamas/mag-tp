@@ -3,15 +3,31 @@ package org.tpmag
 import scala.util.Random
 
 import akka.actor.Actor
+import akka.actor.ActorRef
+import akka.actor.actorRef2Scala
 
-case object Act
+object Employee {
+  case object Act
+  case object Fire
+}
 
-class Employee(val workPropensity: Double) extends Actor {
+class Employee(
+    val productionWatcher: ActorRef,
+    var time: Time,
+    val workPropensity: Double) extends Actor {
+  import Employee._
+  import ProductionWatcher._
+
   def receive = {
-    case Act => if (Random.nextDouble <= workPropensity) {
-      println("working")
-    } else {
-      println("loitering")
+    case Act => {
+      if (Random.nextDouble <= workPropensity) {
+        //        println("working")
+        productionWatcher ! Produce(time)
+      } else {
+        //        println("loitering")
+      }
+      time += 1
     }
+    case Fire => println("oh noes :(")
   }
 }
