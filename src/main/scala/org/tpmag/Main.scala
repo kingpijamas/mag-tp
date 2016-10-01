@@ -10,12 +10,18 @@ import org.tpmag.ProductionWatcher._
 
 object Main extends App {
   val system = ActorSystem("tp-mag")
-  val productionWatcher = system.actorOf(Props(classOf[ProductionWatcher], 10, 1, 1))
+  val periodLength = 5
+  val maxDeviationsAllowed = 1D
+  val employeeCount = 100
+  val productionWatcher =
+    system.actorOf(Props(classOf[ProductionWatcher], periodLength, maxDeviationsAllowed, employeeCount))
 
-  val employees = (1 to 100).map { i =>
-    system.actorOf(Props(classOf[Employee], productionWatcher, 0L, 0.5), s"employee$i")
+  val time = 0L
+  val workPropensity = 0.7
+  val employees = (0 until employeeCount).map { i =>
+    system.actorOf(Props(classOf[Employee], productionWatcher, time, workPropensity), s"employee$i")
   }
 
   employees.map { employee => system.scheduler.schedule(0.seconds, 1.second, employee, Act) }
-  system.scheduler.schedule(0.seconds, 1.second, productionWatcher, FireLazies)
+  system.scheduler.schedule(0.seconds, 10.seconds, productionWatcher, FireLazies)
 }

@@ -24,24 +24,24 @@ object ProductionWatcher {
 
 class ProductionWatcher(
     val periodLength: Int,
-    val maxDeviationsAllowed: Int,
+    val maxDeviationsAllowed: Double,
     val employeeCount: Int) extends Actor {
   import ProductionWatcher._
 
-  val producersPerTime: mutable.Map[Time, mutable.Set[ActorRef]] = mutable.Map().withDefault(_ => mutable.Set())
+  val producersPerTime: mutable.Map[Time, mutable.Set[ActorRef]] = mutable.Map()
 
   def receive = {
-    case Produce(time) => { producersPerTime(time) += sender; producersPerTime.size }
+    case Produce(time) => {
+      val producersForTime = producersPerTime.getOrElseUpdate(time, mutable.Set())
+      producersForTime += sender
+    }
     case FireLazies => {
       if (!producersPerTime.isEmpty) {
-        println("Hola")
         val registeredTimes = producersPerTime.keys.toSeq
-        val period = registeredTimes.sorted(Ordering[Time].reverse).take(2)
-        val (from, to) = (period(0), period(1))
-        producersPerTime.-=(from, to)
-        println(s"Analyzing period ($from, $to)...")
-        val asd = lazies(from, to)
-        println(s"lazies: $asd")
+        val periodTimes = registeredTimes.sorted.take(periodLength)
+        val (from, to) = (periodTimes.min, periodTimes.max)
+        println(s"lazies: ${lazies(from, to).size}")
+        producersPerTime -= (from, to)
       }
     }
   }
@@ -56,7 +56,7 @@ class ProductionWatcher(
     val tolerance = maxDeviationsAllowed * sqrt(produceVariance)
 
     producePerProducer.collect {
-      case (producer, produce) if Math.abs(produce - meanProduce) < tolerance => producer
+      case (producer, produce) if Math.abs(produce - meanProduce) > tolerance => producer
     }
   }
 }

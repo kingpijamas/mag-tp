@@ -13,7 +13,7 @@ object Employee {
 
 class Employee(
     val productionWatcher: ActorRef,
-    var time: Time,
+    var time: Time, // FIXME: get time from elsewhere (or else crashed employees will start at 0L)
     val workPropensity: Double) extends Actor {
   import Employee._
   import ProductionWatcher._
