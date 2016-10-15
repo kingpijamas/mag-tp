@@ -11,7 +11,7 @@ import breeze.linalg.support.CanTraverseValues.ValuesVisitor
 import breeze.numerics.sqrt
 import breeze.stats.MeanAndVariance
 import breeze.stats.meanAndVariance
-import breeze.stats.meanAndVariance.reduce_Double
+import akka.actor.Props
 
 object ProductionSupervisor {
   case class Produce(time: Time)
@@ -24,14 +24,24 @@ object ProductionSupervisor {
     def traverse(from: Iterable[Double], fn: ValuesVisitor[Double]): Unit = from.map(fn.visit)
     def isTraversableAgain(from: Iterable[Double]): Boolean = true
   }
+
+  def props(initialTime: Time,
+            periodLength: Int,
+            maxDeviationsAllowed: Double,
+            employeeCount: Int,
+            timerFreq: FiniteDuration): Props =
+    Props(new ProductionSupervisor(
+      initialTime, periodLength, maxDeviationsAllowed, employeeCount, timerFreq))
 }
 
 class ProductionSupervisor(
-    val initialTime: Time,
-    val periodLength: Int,
-    val maxDeviationsAllowed: Double,
-    val employeeCount: Int,
-    val timerFreq: FiniteDuration) extends Actor with Scheduled {
+  initialTime: Time,
+  periodLength: Int,
+  maxDeviationsAllowed: Double,
+  employeeCount: Int,
+  val timerFreq: FiniteDuration)
+    extends Actor with Scheduled {
+
   import Employee._
   import ProductionSupervisor._
 
