@@ -3,6 +3,7 @@ package org.tpmag
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.duration.FiniteDuration
+import scala.language.postfixOps
 
 import akka.actor.Actor
 
