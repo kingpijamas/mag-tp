@@ -1,25 +1,27 @@
 package org.tpmag
 
-import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
 
-import Employee._
+import Employee.RandomBehaviour
+import Employee.Steal
+import Employee.Work
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props
 import akka.actor.Terminated
 import akka.routing.ActorRefRoutee
-import akka.routing.Router
 import akka.routing.RoundRobinRoutingLogic
+import akka.routing.Router
 
 object EmployeePool {
   def props(targetEmployeeCount: Int,
             workPropensity: Double,
             stealingPropensity: Double,
             timerFreq: FiniteDuration,
-            productionSupervisor: ActorRef): Props =
+            productionSupervisor: ActorRef,
+            warehouse: ActorRef): Props =
     Props(new EmployeePool(
-      targetEmployeeCount, workPropensity, stealingPropensity, timerFreq, productionSupervisor))
+      targetEmployeeCount, workPropensity, stealingPropensity, timerFreq, productionSupervisor, warehouse))
 }
 
 class EmployeePool(
@@ -27,9 +29,16 @@ class EmployeePool(
   workPropensity: Double,
   stealingPropensity: Double,
   timerFreq: FiniteDuration,
-  productionSupervisor: ActorRef)
+  productionSupervisor: ActorRef,
+  warehouse: ActorRef)
     extends Actor {
 
+  // NOTE: temporary, make this per-employee
+  val Behaviours = ProbabilityBag.complete[RandomBehaviour](
+    workPropensity -> Work,
+    stealingPropensity -> Steal)
+
+  var nextId = 0
   var employeeCount = 0
   var router = {
     val employees = Vector.fill(targetEmployeeCount) { ActorRefRoutee(hireEmployee()) }
@@ -44,20 +53,18 @@ class EmployeePool(
 
       val newEmployee = hireEmployee()
       router = router.addRoutee(newEmployee)
-      println(s"$newEmployee hired (#employees = ${employeeCount})")
+      // println(s"$newEmployee hired (#employees = ${employeeCount})")
     }
   }
 
   def hireEmployee(): ActorRef = {
-    val id = employeeCount
-    val behaviours = ProbabilityMap.complete[RandomBehaviour](
-      workPropensity -> Work,
-      stealingPropensity -> Steal)
+    val employee = context.actorOf(
+      Employee.props(Behaviours, timerFreq, productionSupervisor, warehouse),
+      s"employee$nextId")
 
-    //FIXME, s"employee$id"
-    val employee = context.actorOf(Employee.props(behaviours, timerFreq, productionSupervisor))
     context.watch(employee)
     employeeCount += 1
+    nextId += 1
     employee
   }
 }

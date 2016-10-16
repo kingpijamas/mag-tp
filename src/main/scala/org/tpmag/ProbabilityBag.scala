@@ -3,23 +3,23 @@ package org.tpmag
 import scala.reflect.ClassTag
 import scala.util.Random
 
-import org.tpmag.ProbabilityMap.Entry
+import org.tpmag.ProbabilityBag.Entry
 
-import ProbabilityMap.Entry
+import ProbabilityBag.Entry
 import breeze.linalg.DenseVector
 import breeze.linalg.accumulate
 import collection.immutable
 
-object ProbabilityMap {
-  def complete[T](assocs: (Double, T)*): ProbabilityMap[T] = {
-    ProbabilityMap(assocs, complete = true)
+object ProbabilityBag {
+  def complete[T](assocs: (Double, T)*): ProbabilityBag[T] = {
+    ProbabilityBag(assocs, complete = true)
   }
 
-  def partial[T](assocs: (Double, T)*): ProbabilityMap[T] = {
-    ProbabilityMap(assocs, complete = false)
+  def partial[T](assocs: (Double, T)*): ProbabilityBag[T] = {
+    ProbabilityBag(assocs, complete = false)
   }
 
-  def apply[T](assocs: Traversable[(Double, T)], complete: Boolean = false): ProbabilityMap[T] = {
+  def apply[T](assocs: Traversable[(Double, T)], complete: Boolean = false): ProbabilityBag[T] = {
     validate(assocs.map(_._1), complete)
 
     val sortedAssocs = assocs.toSeq.sortBy(_._1)
@@ -28,7 +28,7 @@ object ProbabilityMap {
     val entries = accumProbs.zip(sortedAssocs).map {
       case (accumProb, (prob, value)) => Entry(accumProb, prob, value)
     }
-    new ProbabilityMap(entries, complete)
+    new ProbabilityBag(entries, complete)
   }
 
   private[this] def validate(ns: Traversable[Double], complete: Boolean): Unit = {
@@ -57,7 +57,7 @@ object ProbabilityMap {
   case class Entry[T](accumProb: Double, prob: Double, value: T)
 }
 
-class ProbabilityMap[T](entries: Traversable[Entry[T]], complete: Boolean) {
+class ProbabilityBag[T](entries: Traversable[Entry[T]], complete: Boolean) {
   // TODO extends immutable.Map[T, Double] {
 
   def getRand: Option[T] = {

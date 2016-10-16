@@ -3,6 +3,11 @@ package org.tpmag
 import scala.concurrent.duration.FiniteDuration
 
 import Employee.RandomBehaviour
+import ProductionSupervisor.CurrentTime
+import ProductionSupervisor.GetCurrentTime
+import ProductionSupervisor.Produce
+import Warehouse.Goods
+import Warehouse.StealGoods
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props
@@ -16,21 +21,22 @@ object Employee {
   case object Work extends RandomBehaviour
   case object Steal extends RandomBehaviour
 
-  def props(behaviours: ProbabilityMap[RandomBehaviour],
+  def props(behaviours: ProbabilityBag[RandomBehaviour],
             timerFreq: FiniteDuration,
-            productionSupervisor: ActorRef): Props =
-    Props(new Employee(behaviours, timerFreq, productionSupervisor))
+            productionSupervisor: ActorRef,
+            warehouse: ActorRef): Props =
+    Props(new Employee(behaviours, timerFreq, productionSupervisor, warehouse))
 }
 
 class Employee(
-  behaviours: ProbabilityMap[RandomBehaviour],
+  behaviours: ProbabilityBag[RandomBehaviour],
   override val timerFreq: FiniteDuration,
-  productionSupervisor: ActorRef)
+  productionSupervisor: ActorRef,
+  warehouse: ActorRef)
     extends Actor with Scheduled {
 
   import Employee._
   import context._
-  import ProductionSupervisor._
 
   var time: Option[Time] = None
 
@@ -44,13 +50,15 @@ class Employee(
   }
 
   def timed: Receive = {
-    case Fire => context.stop(self)
     case Act =>
       behaviours.getRand.get match {
-        case Work  => { println("Work"); productionSupervisor ! Produce(time.get) }
-        case Steal => { println("Bwahaha") }
+        case Work  => { println("Working"); productionSupervisor ! Produce(time.get) }
+        case Steal => { println("Sneaking in..."); warehouse ! StealGoods(time.get, 10) }
       }
       time = time.map(_ + 1)
+
+    case Goods(_) => println("Bwahaha!")
+    case Fire     => context.stop(self)
   }
 
   def receive = untimed

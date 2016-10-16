@@ -11,15 +11,26 @@ import scala.language.postfixOps
 
 object Main extends App {
   val system = ActorSystem("tp-mag")
-  val initialTime = 0L
-  val periodLength = 5
-  val maxDeviationsAllowed = 1D
+
   val employeeCount = 10
   val productionSupervisor = system.actorOf(
-    ProductionSupervisor.props(initialTime, periodLength, maxDeviationsAllowed, employeeCount, 10 seconds))
+    ProductionSupervisor.props(
+      initialTime = 0L,
+      periodLength = 5,
+      maxDeviationsAllowed = 1D,
+      employeeCount,
+      timerFreq = 10 seconds))
 
-  val workPropensity = 0.7
-  val stealingPropensity = 0.3
+  val warehouse = system.actorOf(
+    Warehouse.props(
+      catchingPropensity = 0.5))
+
   val employeePool = system.actorOf(
-    EmployeePool.props(employeeCount, workPropensity, stealingPropensity, 0.5 seconds, productionSupervisor))
+    EmployeePool.props(
+      employeeCount,
+      workPropensity = 0.7,
+      stealingPropensity = 0.3,
+      timerFreq = 0.5 seconds,
+      productionSupervisor,
+      warehouse))
 }

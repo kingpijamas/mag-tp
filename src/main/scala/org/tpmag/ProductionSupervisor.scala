@@ -50,23 +50,26 @@ class ProductionSupervisor(
   val producersPerTime = mutable.Map[Time, mutable.Set[ActorRef]]()
 
   def receive = {
-    case Produce(time) => {
+    case Produce(time) =>
       val producersForTime = producersPerTime.getOrElseUpdate(time, mutable.Set())
       producersForTime += sender
-    }
-    case FireLazies if !producersPerTime.isEmpty => {
+
+    case FireLazies if !producersPerTime.isEmpty =>
       val registeredTimes = producersPerTime.keys.toSeq
       val periodTimes = registeredTimes.sorted.take(periodLength)
       val (from, to) = (periodTimes.min, periodTimes.max)
       val laziesFound = lazies(from, to)
       println(s"\nFound ${laziesFound.size} lazies, will fire them")
-      laziesFound.foreach(_ ! Fire)
+      laziesFound.foreach(_ ! Fire) // TODO: maybe use a Router here?
       producersPerTime --= (from to to)
-    }
-    case GetCurrentTime => { sender ! CurrentTime(maxTime) }
+
+    case GetCurrentTime => sender ! CurrentTime(maxTime) // FIXME: move elsewhere!
   }
 
   private[this] def lazies(from: Time, to: Time) = {
+    def producersBetween(from: Time, to: Time): Iterable[ActorRef] =
+      producersPerTime.collect { case (t, producers) if t >= from && t < to => producers }.flatten
+
     val relevantProducers = producersBetween(from, to)
     val producePerProducer = relevantProducers.groupBy(identity).mapValues(_.size.toDouble)
     val MeanAndVariance(meanProduce, produceVariance, _) = meanAndVariance(producePerProducer.values)
@@ -76,9 +79,6 @@ class ProductionSupervisor(
       case (producer, produce) if Math.abs(produce - meanProduce) > tolerance => producer
     }
   }
-
-  private[this] def producersBetween(from: Time, to: Time): Iterable[ActorRef] =
-    producersPerTime.collect { case (t, producers) if t >= from && t < to => producers }.flatten
 
   private[this] def maxTime =
     producersPerTime.keys.foldLeft(initialTime)((t, maxT) => if (t > maxT) t else maxT)
