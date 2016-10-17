@@ -2,7 +2,8 @@ package org.tpmag
 
 import scala.concurrent.duration.FiniteDuration
 
-import Employee.RandomBehaviour
+import Employee.Behaviour
+import Employee.Socialize
 import Employee.Steal
 import Employee.Work
 import akka.actor.Actor
@@ -17,26 +18,35 @@ object EmployeePool {
   def props(targetEmployeeCount: Int,
             workPropensity: Double,
             stealingPropensity: Double,
+            socializationPropensity: Double,
             timerFreq: FiniteDuration,
             productionSupervisor: ActorRef,
             warehouse: ActorRef): Props =
     Props(new EmployeePool(
-      targetEmployeeCount, workPropensity, stealingPropensity, timerFreq, productionSupervisor, warehouse))
+      targetEmployeeCount,
+      workPropensity,
+      stealingPropensity,
+      socializationPropensity,
+      timerFreq,
+      productionSupervisor,
+      warehouse))
 }
 
 class EmployeePool(
   targetEmployeeCount: Int,
   workPropensity: Double,
   stealingPropensity: Double,
+  socializationPropensity: Double,
   timerFreq: FiniteDuration,
   productionSupervisor: ActorRef,
   warehouse: ActorRef)
     extends Actor {
 
   // NOTE: temporary, make this per-employee
-  val Behaviours = ProbabilityBag.complete[RandomBehaviour](
+  val Behaviours = ProbabilityBag.complete[Behaviour](
     workPropensity -> Work,
-    stealingPropensity -> Steal)
+    stealingPropensity -> Steal,
+    socializationPropensity -> Socialize)
 
   var nextId = 0
   var employeeCount = 0
@@ -46,20 +56,21 @@ class EmployeePool(
   }
 
   def receive = {
-    case Terminated(employee) => {
+    case Terminated(employee) =>
       // println(s"$employee fired (#employees = ${employees.size})")
       router = router.removeRoutee(employee)
       employeeCount -= 1
 
       val newEmployee = hireEmployee()
       router = router.addRoutee(newEmployee)
-      // println(s"$newEmployee hired (#employees = ${employeeCount})")
-    }
+    // println(s"$newEmployee hired (#employees = ${employeeCount})")
+
+    case msg => router.route(msg, sender)
   }
 
   def hireEmployee(): ActorRef = {
     val employee = context.actorOf(
-      Employee.props(Behaviours, timerFreq, productionSupervisor, warehouse),
+      Employee.props(timerFreq, Behaviours, self, productionSupervisor, warehouse),
       s"employee$nextId")
 
     context.watch(employee)

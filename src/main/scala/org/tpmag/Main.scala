@@ -28,8 +28,9 @@ object Main extends App {
   val employeePool = system.actorOf(
     EmployeePool.props(
       employeeCount,
-      workPropensity = 0.7,
-      stealingPropensity = 0.3,
+      workPropensity = 0.5,
+      stealingPropensity = 0.2,
+      socializationPropensity = 0.3,
       timerFreq = 0.5 seconds,
       productionSupervisor,
       warehouse))
