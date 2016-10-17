@@ -13,40 +13,27 @@ import akka.actor.Terminated
 import akka.routing.ActorRefRoutee
 import akka.routing.RoundRobinRoutingLogic
 import akka.routing.Router
+import com.softwaremill.macwire._
+import com.softwaremill.tagging._
 
 object EmployeePool {
   def props(targetEmployeeCount: Int,
-            workPropensity: Double,
-            stealingPropensity: Double,
-            socializationPropensity: Double,
+            propensities: Seq[(Double, Behaviour)],
             timerFreq: FiniteDuration,
-            productionSupervisor: ActorRef,
-            warehouse: ActorRef): Props =
-    Props(new EmployeePool(
-      targetEmployeeCount,
-      workPropensity,
-      stealingPropensity,
-      socializationPropensity,
-      timerFreq,
-      productionSupervisor,
-      warehouse))
+            productionSupervisor: ActorRef @@ ProductionSupervisor,
+            warehouse: ActorRef @@ Warehouse): Props = {
+    val behaviours = ProbabilityBag.complete(propensities: _*) // TODO: make this per-employee
+    Props(wire[EmployeePool])
+  }
 }
 
 class EmployeePool(
   targetEmployeeCount: Int,
-  workPropensity: Double,
-  stealingPropensity: Double,
-  socializationPropensity: Double,
+  behaviours: ProbabilityBag[Behaviour],
   timerFreq: FiniteDuration,
-  productionSupervisor: ActorRef,
-  warehouse: ActorRef)
+  productionSupervisor: ActorRef @@ ProductionSupervisor,
+  warehouse: ActorRef @@ Warehouse)
     extends Actor {
-
-  // NOTE: temporary, make this per-employee
-  val Behaviours = ProbabilityBag.complete[Behaviour](
-    workPropensity -> Work,
-    stealingPropensity -> Steal,
-    socializationPropensity -> Socialize)
 
   var nextId = 0
   var employeeCount = 0
@@ -70,7 +57,12 @@ class EmployeePool(
 
   def hireEmployee(): ActorRef = {
     val employee = context.actorOf(
-      Employee.props(timerFreq, Behaviours, self, productionSupervisor, warehouse),
+      Employee.props(
+        timerFreq,
+        behaviours,
+        self.taggedWith[EmployeePool],
+        productionSupervisor,
+        warehouse),
       s"employee$nextId")
 
     context.watch(employee)

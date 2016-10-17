@@ -3,6 +3,7 @@ package org.tpmag
 import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
 
+import ProductionSupervisor._
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.actorRef2Scala
@@ -12,6 +13,9 @@ import breeze.numerics.sqrt
 import breeze.stats.MeanAndVariance
 import breeze.stats.meanAndVariance
 import akka.actor.Props
+
+import com.softwaremill.macwire._
+import com.softwaremill.tagging._
 
 object ProductionSupervisor {
   case class Produce(time: Time)
@@ -25,20 +29,22 @@ object ProductionSupervisor {
     def isTraversableAgain(from: Iterable[Double]): Boolean = true
   }
 
+  trait PeriodLength
+  trait EmployeeCount
+
   def props(initialTime: Time,
-            periodLength: Int,
+            periodLength: Int @@ PeriodLength,
             maxDeviationsAllowed: Double,
-            employeeCount: Int,
+            employeeCount: Int @@ EmployeeCount,
             timerFreq: FiniteDuration): Props =
-    Props(new ProductionSupervisor(
-      initialTime, periodLength, maxDeviationsAllowed, employeeCount, timerFreq))
+    Props(wire[ProductionSupervisor])
 }
 
 class ProductionSupervisor(
   initialTime: Time,
-  periodLength: Int,
+  periodLength: Int @@ PeriodLength,
   maxDeviationsAllowed: Double,
-  employeeCount: Int,
+  employeeCount: Int @@ EmployeeCount,
   val timerFreq: FiniteDuration)
     extends Actor with Scheduled {
 

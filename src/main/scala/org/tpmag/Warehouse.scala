@@ -8,13 +8,16 @@ import akka.actor.actorRef2Scala
 
 import collection.mutable
 
+import com.softwaremill.macwire._
+import com.softwaremill.tagging._
+
 object Warehouse {
   case class StealGoods(time: Time, quantity: Int)
   case class Goods(quantity: Int)
 
   case class TheftLog(time: Time, quantity: Int, thiefCaught: Boolean)
 
-  def props(catchingPropensity: Double): Props = Props(new Warehouse(catchingPropensity))
+  def props(catchingPropensity: Double): Props = Props(wire[Warehouse])
 }
 
 class Warehouse(catchingPropensity: Double) extends Actor {

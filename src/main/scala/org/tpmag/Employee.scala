@@ -17,6 +17,8 @@ import akka.actor.ActorRef
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.actor.Terminated
+import com.softwaremill.macwire._
+import com.softwaremill.tagging._
 
 object Employee {
   case object Act
@@ -29,21 +31,20 @@ object Employee {
   case object Steal extends Behaviour
   case object Socialize extends Behaviour
 
-  def props(
-    timerFreq: FiniteDuration,
-    behaviours: ProbabilityBag[Behaviour],
-    employees: ActorRef,
-    productionSupervisor: ActorRef,
-    warehouse: ActorRef): Props =
-    Props(new Employee(timerFreq, behaviours, employees, productionSupervisor, warehouse))
+  def props(timerFreq: FiniteDuration,
+            behaviours: ProbabilityBag[Behaviour],
+            employees: ActorRef @@ EmployeePool,
+            productionSupervisor: ActorRef @@ ProductionSupervisor,
+            warehouse: ActorRef @@ Warehouse): Props =
+    Props(wire[Employee])
 }
 
 class Employee(
   override val timerFreq: FiniteDuration,
   override val behaviours: ProbabilityBag[Behaviour],
-  employees: ActorRef,
-  productionSupervisor: ActorRef,
-  warehouse: ActorRef)
+  employees: ActorRef @@ EmployeePool,
+  productionSupervisor: ActorRef @@ ProductionSupervisor,
+  warehouse: ActorRef @@ Warehouse)
     extends Actor with Scheduled with RandomBehaviours[Behaviour] {
 
   import Employee._
@@ -73,13 +74,13 @@ class Employee(
           employees ! Talk
         case Steal =>
           println("Sneaking in...")
-          warehouse ! StealGoods(time.get, 10)
+          warehouse ! StealGoods(time.get, 10) // FIXME: magic number!
       }
       time = time.map(_ + 1)
 
     case Talk if sender != self =>
-      val relation: Double = relations.getOrElse(sender, 0)
-      val newRelation = min(relation + Random.nextDouble, 1)
+      val relation: Double = relations.getOrElse(sender, 0) // FIXME: magic number!
+      val newRelation = min(relation + Random.nextDouble, 1) // FIXME: magic number!
       relations(sender) = newRelation
       context.watch(sender)
       sender ! TalkBack(newRelation)
@@ -91,8 +92,8 @@ class Employee(
 
     case Terminated(employee) =>
       relations -= sender; println("Goodbye friend!")
-    case Goods(_)             => println("Bwahaha!")
-    case Fire                 => context.stop(self)
+    case Goods(_) => println("Bwahaha!")
+    case Fire     => context.stop(self)
   }
 
   def receive = untimed
