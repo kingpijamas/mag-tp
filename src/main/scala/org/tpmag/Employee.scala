@@ -6,19 +6,21 @@ import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
 import scala.util.Random
 
+import org.tpmag.ProductionSupervisor.CurrentTime
+import org.tpmag.ProductionSupervisor.GetCurrentTime
+import org.tpmag.ProductionSupervisor.Produce
+import org.tpmag.Warehouse.Goods
+import org.tpmag.Warehouse.StealGoods
+
+import com.softwaremill.macwire.wire
+import com.softwaremill.tagging.{ @@ => @@ }
+
 import Employee.Behaviour
-import ProductionSupervisor.CurrentTime
-import ProductionSupervisor.GetCurrentTime
-import ProductionSupervisor.Produce
-import Warehouse.Goods
-import Warehouse.StealGoods
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props
-import akka.actor.actorRef2Scala
 import akka.actor.Terminated
-import com.softwaremill.macwire._
-import com.softwaremill.tagging._
+import akka.actor.actorRef2Scala
 
 object Employee {
   case object Act

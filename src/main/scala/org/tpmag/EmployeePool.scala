@@ -2,10 +2,12 @@ package org.tpmag
 
 import scala.concurrent.duration.FiniteDuration
 
-import Employee.Behaviour
-import Employee.Socialize
-import Employee.Steal
-import Employee.Work
+import org.tpmag.Employee.Behaviour
+
+import com.softwaremill.macwire.wire
+import com.softwaremill.tagging.{ @@ => @@ }
+import com.softwaremill.tagging.Tagger
+
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props
@@ -13,8 +15,6 @@ import akka.actor.Terminated
 import akka.routing.ActorRefRoutee
 import akka.routing.RoundRobinRoutingLogic
 import akka.routing.Router
-import com.softwaremill.macwire._
-import com.softwaremill.tagging._
 
 object EmployeePool {
   def props(targetEmployeeCount: Int,

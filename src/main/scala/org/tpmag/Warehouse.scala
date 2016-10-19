@@ -10,6 +10,7 @@ import collection.mutable
 
 import com.softwaremill.macwire._
 import com.softwaremill.tagging._
+import org.tpmag.Employee
 
 object Warehouse {
   case class StealGoods(time: Time, quantity: Int)

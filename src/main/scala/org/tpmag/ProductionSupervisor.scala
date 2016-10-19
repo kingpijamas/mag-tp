@@ -16,6 +16,7 @@ import akka.actor.Props
 
 import com.softwaremill.macwire._
 import com.softwaremill.tagging._
+import org.tpmag.Employee
 
 object ProductionSupervisor {
   case class Produce(time: Time)
