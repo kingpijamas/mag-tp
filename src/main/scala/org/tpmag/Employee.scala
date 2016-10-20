@@ -62,23 +62,34 @@ class Employee(
 
     case CurrentTime(time) =>
       this.time = Some(time)
-      become(timed)
+      become(
+        actRandomly
+          .orElse(followUpSocialization)
+          .orElse(followUpThieving)
+          .orElse(receiveOrders))
   }
 
-  def timed: Receive = {
+  def actRandomly: Receive = {
     case Act =>
       randBehaviour match {
         case Work =>
           println("Working")
           productionSupervisor ! Produce(time.get)
+
         case Socialize =>
           println("Blah blah")
           employees ! Talk
+
         case Steal =>
           println("Sneaking in...")
           warehouse ! StealGoods(time.get, 10) // FIXME: magic number!
       }
       time = time.map(_ + 1)
+  }
+
+  def followUpSocialization: Receive = {
+    case Talk if sender == self =>
+      time = time.map(_ - 1)
 
     case Talk if sender != self =>
       val relation: Double = relations.getOrElse(sender, 0) // FIXME: magic number!
@@ -93,9 +104,16 @@ class Employee(
       println(s"$self $relations")
 
     case Terminated(employee) =>
-      relations -= sender; println("Goodbye friend!")
+      relations -= sender
+      println("Goodbye friend!")
+  }
+
+  def followUpThieving: Receive = {
     case Goods(_) => println("Bwahaha!")
-    case Fire     => context.stop(self)
+  }
+
+  def receiveOrders: Receive = {
+    case Fire => context.stop(self)
   }
 
   def receive = untimed
