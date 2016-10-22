@@ -6,8 +6,6 @@ import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
 import scala.util.Random
 
-import org.tpmag.ProductionSupervisor.CurrentTime
-import org.tpmag.ProductionSupervisor.GetCurrentTime
 import org.tpmag.ProductionSupervisor.Produce
 import org.tpmag.Warehouse.Goods
 import org.tpmag.Warehouse.StealGoods
@@ -23,6 +21,8 @@ import akka.actor.Terminated
 import akka.actor.actorRef2Scala
 
 object Employee {
+  val MaxRelation = 1
+  
   case object Act
   case object Fire
   case object Talk
@@ -47,29 +47,17 @@ class Employee(
   employees: ActorRef @@ EmployeePool,
   productionSupervisor: ActorRef @@ ProductionSupervisor,
   warehouse: ActorRef @@ Warehouse)
-    extends Actor with Scheduled with RandomBehaviours[Behaviour] {
-
+    extends Actor
+    with ExternallyTimedActor
+    with RandomBehaviours[Behaviour] {
   import Employee._
-  import context._
 
-  var time: Option[Time] = None
-  val relations = mutable.Map[ActorRef, Double](self -> 1)
+  val relations = mutable.Map[ActorRef, Double](self -> MaxRelation)
 
   def timerMessage = Act
+  def timer = productionSupervisor
 
-  def untimed: Receive = {
-    case Act => productionSupervisor ! GetCurrentTime
-
-    case CurrentTime(time) =>
-      this.time = Some(time)
-      become(
-        actRandomly
-          .orElse(followUpSocialization)
-          .orElse(followUpThieving)
-          .orElse(receiveOrders))
-  }
-
-  def actRandomly: Receive = {
+  def timed: Receive = {
     case Act =>
       randBehaviour match {
         case Work =>
@@ -115,6 +103,4 @@ class Employee(
   def receiveOrders: Receive = {
     case Fire => context.stop(self)
   }
-
-  def receive = untimed
 }

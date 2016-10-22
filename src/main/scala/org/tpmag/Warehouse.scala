@@ -1,16 +1,13 @@
 package org.tpmag
 
+import scala.collection.mutable
 import scala.util.Random
+
+import com.softwaremill.macwire.wire
 
 import akka.actor.Actor
 import akka.actor.Props
 import akka.actor.actorRef2Scala
-
-import collection.mutable
-
-import com.softwaremill.macwire._
-import com.softwaremill.tagging._
-import org.tpmag.Employee
 
 object Warehouse {
   case class StealGoods(time: Time, quantity: Int)

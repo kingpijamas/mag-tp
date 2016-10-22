@@ -16,7 +16,7 @@ object Main extends App {
   val system = ActorSystem("tp-mag")
 
   val periodLength = 5
-  val employeeCount = 10
+  val employeeCount = 1
   val productionSupervisor = system.actorOf(
     ProductionSupervisor.props(
       initialTime = 0L,
