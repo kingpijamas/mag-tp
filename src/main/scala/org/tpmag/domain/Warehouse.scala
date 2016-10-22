@@ -1,4 +1,4 @@
-package org.tpmag
+package org.tpmag.domain
 
 import scala.collection.mutable
 import scala.util.Random
@@ -19,8 +19,8 @@ object Warehouse {
 }
 
 class Warehouse(catchingPropensity: Double) extends Actor {
-  import Employee.Fire
   import Warehouse._
+  import Employee.Fire
 
   val thefts = mutable.Seq[TheftLog]()
 

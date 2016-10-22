@@ -1,16 +1,14 @@
-package org.tpmag
+package org.tpmag.util
 
 import scala.reflect.ClassTag
 import scala.util.Random
 
-import org.tpmag.ProbabilityBag.Entry
-
-import ProbabilityBag.Entry
 import breeze.linalg.DenseVector
 import breeze.linalg.accumulate
-import collection.immutable
 
 object ProbabilityBag {
+  case class Entry[T](accumProb: Double, prob: Double, value: T)
+
   def complete[T](assocs: (Double, T)*): ProbabilityBag[T] = {
     ProbabilityBag(assocs, complete = true)
   }
@@ -53,12 +51,11 @@ object ProbabilityBag {
     checkAllAreProbs()
     checkSumIsValid()
   }
-
-  case class Entry[T](accumProb: Double, prob: Double, value: T)
 }
 
-class ProbabilityBag[T](entries: Traversable[Entry[T]], complete: Boolean) {
+class ProbabilityBag[T](entries: Traversable[ProbabilityBag.Entry[T]], complete: Boolean) {
   // TODO extends immutable.Map[T, Double] {
+  import ProbabilityBag._
 
   def getRand: Option[T] = {
     val rand = Random.nextDouble

@@ -1,28 +1,35 @@
 package org.tpmag
-import scala.concurrent._
-import ExecutionContext.Implicits.global
+
+import scala.concurrent.duration.DurationDouble
+import scala.concurrent.duration.DurationInt
+import scala.language.postfixOps
+
+import org.tpmag.domain.Employee.Socialize
+import org.tpmag.domain.Employee.Steal
+import org.tpmag.domain.Employee.Work
+import org.tpmag.domain.EmployeePool
+import org.tpmag.domain.ProductionSupervisor
+import org.tpmag.domain.ProductionSupervisor.EmployeeCount
+import org.tpmag.domain.ProductionSupervisor.MaxDeviationsAllowed
+import org.tpmag.domain.ProductionSupervisor.PeriodLength
+import org.tpmag.domain.Warehouse
+
+import com.softwaremill.tagging.Tagger
 
 import akka.actor.ActorSystem
-import akka.actor.Props
-import scala.concurrent.duration._
-import org.tpmag.Employee._
-import org.tpmag.ProductionSupervisor._
-import scala.language.postfixOps
-import com.softwaremill.macwire._
-import com.softwaremill.tagging._
-import ProductionSupervisor._
 
 object Main extends App {
   val system = ActorSystem("tp-mag")
 
+  val maxDeviationsAllowed = 1D
   val periodLength = 5
   val employeeCount = 1
   val productionSupervisor = system.actorOf(
     ProductionSupervisor.props(
       initialTime = 0L,
-      maxDeviationsAllowed = 1D,
       timerFreq = 10 seconds,
       periodLength = periodLength.taggedWith[PeriodLength],
+      maxDeviationsAllowed = maxDeviationsAllowed.taggedWith[MaxDeviationsAllowed],
       employeeCount = employeeCount.taggedWith[EmployeeCount]))
     .taggedWith[ProductionSupervisor]
 

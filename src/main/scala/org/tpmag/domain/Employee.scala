@@ -1,4 +1,4 @@
-package org.tpmag
+package org.tpmag.domain
 
 import java.lang.Math.min
 
@@ -6,14 +6,13 @@ import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
 import scala.util.Random
 
-import org.tpmag.ProductionSupervisor.Produce
-import org.tpmag.Warehouse.Goods
-import org.tpmag.Warehouse.StealGoods
+import org.tpmag.domain.behaviour.ExternallyTimedActor
+import org.tpmag.util.ProbabilityBag
+import org.tpmag.util.RandomBehaviours
 
 import com.softwaremill.macwire.wire
 import com.softwaremill.tagging.{ @@ => @@ }
 
-import Employee.Behaviour
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props
@@ -22,7 +21,7 @@ import akka.actor.actorRef2Scala
 
 object Employee {
   val MaxRelation = 1
-  
+
   case object Act
   case object Fire
   case object Talk
@@ -43,14 +42,14 @@ object Employee {
 
 class Employee(
   override val timerFreq: FiniteDuration,
-  override val behaviours: ProbabilityBag[Behaviour],
+  override val behaviours: ProbabilityBag[Employee.Behaviour],
   employees: ActorRef @@ EmployeePool,
   productionSupervisor: ActorRef @@ ProductionSupervisor,
   warehouse: ActorRef @@ Warehouse)
-    extends Actor
-    with ExternallyTimedActor
-    with RandomBehaviours[Behaviour] {
+    extends Actor with ExternallyTimedActor with RandomBehaviours[Employee.Behaviour] {
   import Employee._
+  import ProductionSupervisor._
+  import Warehouse._
 
   val relations = mutable.Map[ActorRef, Double](self -> MaxRelation)
 

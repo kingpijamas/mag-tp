@@ -1,13 +1,14 @@
-package org.tpmag
+package org.tpmag.domain
 
 import scala.concurrent.duration.FiniteDuration
 
-import org.tpmag.Employee.Behaviour
+import org.tpmag.util.ProbabilityBag
 
 import com.softwaremill.macwire.wire
 import com.softwaremill.tagging.{ @@ => @@ }
 import com.softwaremill.tagging.Tagger
 
+import Employee.Behaviour
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props

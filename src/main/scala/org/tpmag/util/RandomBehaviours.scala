@@ -1,4 +1,4 @@
-package org.tpmag
+package org.tpmag.util
 
 trait RandomBehaviours[B] {
   def behaviours: ProbabilityBag[B]

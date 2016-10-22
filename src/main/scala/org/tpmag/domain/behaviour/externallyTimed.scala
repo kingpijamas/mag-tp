@@ -1,8 +1,12 @@
-package org.tpmag
+package org.tpmag.domain.behaviour
+
+import org.tpmag.util.Scheduled
+import org.tpmag.domain.Time
 
 import akka.actor.Actor
-import scala.concurrent.duration.FiniteDuration
 import akka.actor.ActorRef
+import akka.actor.actorRef2Scala
+import org.tpmag.util.ChainingActor
 
 object ExternallyTimedActor {
   case class CurrentTime(time: Time)
@@ -10,7 +14,7 @@ object ExternallyTimedActor {
 
 trait ExternallyTimedActor extends Actor with Scheduled {
   import ExternallyTimedActor._
-  import Timer.GetCurrentTime
+  import TimerActor.GetCurrentTime
 
   var time: Option[Time] = None
 
@@ -31,13 +35,13 @@ trait ExternallyTimedActor extends Actor with Scheduled {
   def receive: Receive = untimed
 }
 
-object Timer {
+object TimerActor {
   case object GetCurrentTime
 }
 
-trait Timer extends ChainingActor {
-  import Timer._
+trait TimerActor extends ChainingActor {
   import ExternallyTimedActor.CurrentTime
+  import TimerActor._
 
   def time: Time
 

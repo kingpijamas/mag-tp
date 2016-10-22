@@ -1,23 +1,20 @@
-package org.tpmag
+package org.tpmag.domain
 
 import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
-
 import com.softwaremill.macwire.wire
-import com.softwaremill.tagging.{ @@ => @@ }
-
-import ProductionSupervisor.EmployeeCount
-import ProductionSupervisor.PeriodLength
-import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props
 import akka.actor.actorRef2Scala
+import breeze.stats._
 import breeze.linalg.support.CanTraverseValues
 import breeze.linalg.support.CanTraverseValues.ValuesVisitor
 import breeze.numerics.sqrt
 import breeze.stats.MeanAndVariance
-import breeze.stats.meanAndVariance
-import breeze.stats.meanAndVariance.reduce_Double
+import org.tpmag.util.Scheduled
+import com.softwaremill.tagging._
+import com.softwaremill.macwire._
+import org.tpmag.domain.behaviour.TimerActor
 
 object ProductionSupervisor {
   case class Produce(time: Time)
@@ -30,11 +27,12 @@ object ProductionSupervisor {
   }
 
   trait PeriodLength
+  trait MaxDeviationsAllowed
   trait EmployeeCount
 
   def props(initialTime: Time,
             periodLength: Int @@ PeriodLength,
-            maxDeviationsAllowed: Double,
+            maxDeviationsAllowed: Double @@ MaxDeviationsAllowed,
             employeeCount: Int @@ EmployeeCount,
             timerFreq: FiniteDuration): Props =
     Props(wire[ProductionSupervisor])
@@ -42,13 +40,11 @@ object ProductionSupervisor {
 
 class ProductionSupervisor(
   initialTime: Time,
-  periodLength: Int @@ PeriodLength,
-  maxDeviationsAllowed: Double,
-  employeeCount: Int @@ EmployeeCount,
+  periodLength: Int @@ ProductionSupervisor.PeriodLength,
+  maxDeviationsAllowed: Double @@ ProductionSupervisor.MaxDeviationsAllowed,
+  employeeCount: Int @@ ProductionSupervisor.EmployeeCount,
   val timerFreq: FiniteDuration)
-    extends ChainingActor
-    with Timer
-    with Scheduled {
+    extends TimerActor with Scheduled {
 
   import Employee._
   import ProductionSupervisor._

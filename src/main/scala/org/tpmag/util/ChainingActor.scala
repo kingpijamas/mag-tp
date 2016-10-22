@@ -1,4 +1,4 @@
-package org.tpmag
+package org.tpmag.util
 
 import scala.collection.mutable
 
