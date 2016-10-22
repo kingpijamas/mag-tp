@@ -23,7 +23,7 @@ object Main extends App {
 
   val maxDeviationsAllowed = 1D
   val periodLength = 5
-  val employeeCount = 1
+  val employeeCount = 10
   val productionSupervisor = system.actorOf(
     ProductionSupervisor.props(
       initialTime = 0L,

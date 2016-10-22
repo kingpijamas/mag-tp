@@ -18,14 +18,13 @@ import akka.actor.ActorRef
 import akka.actor.Props
 import akka.actor.Terminated
 import akka.actor.actorRef2Scala
+import org.tpmag.util.ReceiveChaining
+import org.tpmag.domain.behaviour.Socialization
+import org.tpmag.domain.behaviour.StealingActor
 
 object Employee {
-  val MaxRelation = 1
-
   case object Act
   case object Fire
-  case object Talk
-  case class TalkBack(newRelation: Double)
 
   sealed trait Behaviour
   case object Work extends Behaviour
@@ -46,57 +45,38 @@ class Employee(
   employees: ActorRef @@ EmployeePool,
   productionSupervisor: ActorRef @@ ProductionSupervisor,
   warehouse: ActorRef @@ Warehouse)
-    extends Actor with ExternallyTimedActor with RandomBehaviours[Employee.Behaviour] {
+    extends Actor
+    with ReceiveChaining
+    with ExternallyTimedActor
+    with RandomBehaviours[Employee.Behaviour]
+    with Socialization
+    with StealingActor {
   import Employee._
   import ProductionSupervisor._
-  import Warehouse._
-
-  val relations = mutable.Map[ActorRef, Double](self -> MaxRelation)
 
   def timerMessage = Act
   def timer = productionSupervisor
+  def socialPool = employees
+  def theftVictim = warehouse
 
-  def timed: Receive = {
+  // TODO: randomly(steal, prob=0.1)
+
+  def timed: Receive =
+    actRandomly orElse
+      respondToSocialization orElse
+      stealingFollowup
+
+  def actRandomly: Receive = {
     case Act =>
       randBehaviour match {
         case Work =>
           println("Working")
           productionSupervisor ! Produce(time.get)
 
-        case Socialize =>
-          println("Blah blah")
-          employees ! Talk
-
-        case Steal =>
-          println("Sneaking in...")
-          warehouse ! StealGoods(time.get, 10) // FIXME: magic number!
+        case Socialize => socialize()
+        case Steal     => steal(10) // FIXME: magic number
       }
       time = time.map(_ + 1)
-  }
-
-  def followUpSocialization: Receive = {
-    case Talk if sender == self =>
-      time = time.map(_ - 1)
-
-    case Talk if sender != self =>
-      val relation: Double = relations.getOrElse(sender, 0) // FIXME: magic number!
-      val newRelation = min(relation + Random.nextDouble, 1) // FIXME: magic number!
-      relations(sender) = newRelation
-      context.watch(sender)
-      sender ! TalkBack(newRelation)
-
-    case TalkBack(newRelation) =>
-      relations(sender) = newRelation
-      context.watch(sender)
-      println(s"$self $relations")
-
-    case Terminated(employee) =>
-      relations -= sender
-      println("Goodbye friend!")
-  }
-
-  def followUpThieving: Receive = {
-    case Goods(_) => println("Bwahaha!")
   }
 
   def receiveOrders: Receive = {

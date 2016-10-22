@@ -16,10 +16,17 @@ trait ExternallyTimedActor extends Actor with Scheduled {
   import ExternallyTimedActor._
   import TimerActor.GetCurrentTime
 
+  // TODO: move elsewhere!
   var time: Option[Time] = None
+  //
 
   def timer: ActorRef
   def timed: Receive
+
+  // TODO: move elsewhere!
+  def spendTime(time: Time = 1): Unit = { this.time = this.time.map(_ + 1) }
+  def recoverTime(time: Time = 1): Unit = { this.time = this.time.map(_ - 1) }
+  //
 
   def untimed: Receive = {
     case msg if msg == timerMessage =>
@@ -45,11 +52,9 @@ trait TimerActor extends ChainingActor {
 
   def time: Time
 
-  private[this] def respondToTimeRequests: Receive = {
+  registerReceive {
     case GetCurrentTime =>
       println(s"$self: oh $sender it's $time")
       sender ! CurrentTime(time)
   }
-
-  registerReceive(respondToTimeRequests)
 }

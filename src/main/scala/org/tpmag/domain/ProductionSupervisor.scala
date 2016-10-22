@@ -45,7 +45,6 @@ class ProductionSupervisor(
   employeeCount: Int @@ ProductionSupervisor.EmployeeCount,
   val timerFreq: FiniteDuration)
     extends TimerActor with Scheduled {
-
   import Employee._
   import ProductionSupervisor._
 
@@ -53,10 +52,7 @@ class ProductionSupervisor(
 
   val producersPerTime = mutable.Map[Time, mutable.Set[ActorRef]]()
 
-  def time: Time =
-    producersPerTime.keys.foldLeft(initialTime)((t, maxT) => if (t > maxT) t else maxT)
-
-  def foo: Receive = {
+  registerReceive {
     case Produce(time) =>
       val producersForTime = producersPerTime.getOrElseUpdate(time, mutable.Set())
       producersForTime += sender
@@ -67,7 +63,7 @@ class ProductionSupervisor(
       val (from, to) = (periodTimes.min, periodTimes.max)
       val laziesFound = lazies(from, to)
       println(s"\nFound ${laziesFound.size} lazies, will fire them")
-      laziesFound.foreach(_ ! Fire) // TODO: maybe use a Router here?
+      laziesFound.foreach(_ ! Fire)
       producersPerTime --= (from to to)
   }
 
@@ -85,5 +81,5 @@ class ProductionSupervisor(
     }
   }
 
-  registerReceive(foo)
+  def time: Time = producersPerTime.keys.foldLeft(initialTime)((t, maxT) => if (t > maxT) t else maxT)
 }
