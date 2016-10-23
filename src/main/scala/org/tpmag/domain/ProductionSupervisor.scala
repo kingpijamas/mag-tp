@@ -15,9 +15,9 @@ import org.tpmag.util.Scheduled
 import com.softwaremill.tagging._
 import com.softwaremill.macwire._
 import org.tpmag.domain.behaviour.TimerActor
+import org.tpmag.domain.behaviour.ProductionReceiver
 
 object ProductionSupervisor {
-  case class Produce(time: Time)
   case object FireLazies
 
   // Needed for statistics
@@ -39,24 +39,18 @@ object ProductionSupervisor {
 }
 
 class ProductionSupervisor(
-  initialTime: Time,
+  val initialTime: Time,
   periodLength: Int @@ ProductionSupervisor.PeriodLength,
   maxDeviationsAllowed: Double @@ ProductionSupervisor.MaxDeviationsAllowed,
   employeeCount: Int @@ ProductionSupervisor.EmployeeCount,
   val timerFreq: FiniteDuration)
-    extends TimerActor with Scheduled {
+    extends ProductionReceiver with TimerActor with Scheduled {
   import Employee._
   import ProductionSupervisor._
 
   def timerMessage = FireLazies
 
-  val producersPerTime = mutable.Map[Time, mutable.Set[ActorRef]]()
-
   registerReceive {
-    case Produce(time) =>
-      val producersForTime = producersPerTime.getOrElseUpdate(time, mutable.Set())
-      producersForTime += sender
-
     case FireLazies if !producersPerTime.isEmpty =>
       val registeredTimes = producersPerTime.keys.toSeq
       val periodTimes = registeredTimes.sorted.take(periodLength)
@@ -80,6 +74,4 @@ class ProductionSupervisor(
       case (producer, produce) if Math.abs(produce - meanProduce) > tolerance => producer
     }
   }
-
-  def time: Time = producersPerTime.keys.foldLeft(initialTime)((t, maxT) => if (t > maxT) t else maxT)
 }

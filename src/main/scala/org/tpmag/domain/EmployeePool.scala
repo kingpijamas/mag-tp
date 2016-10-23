@@ -19,7 +19,7 @@ import akka.routing.Router
 
 object EmployeePool {
   def props(targetEmployeeCount: Int,
-            propensities: Seq[(Double, Behaviour)],
+            propensities: Seq[(Behaviour, Double)],
             timerFreq: FiniteDuration,
             productionSupervisor: ActorRef @@ ProductionSupervisor,
             warehouse: ActorRef @@ Warehouse): Props = {

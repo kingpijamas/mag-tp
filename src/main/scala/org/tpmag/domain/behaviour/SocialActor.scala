@@ -8,15 +8,15 @@ import java.lang.Math.min
 
 import scala.collection.mutable
 
-object Socialization {
+object SocialActor {
   val MaxRelation = 1
 
   case object Talk
   case class TalkBack(newRelation: Double)
 }
 
-trait Socialization extends ExternallyTimedActor {
-  import Socialization._
+trait SocialActor extends ExternallyTimedActor {
+  import SocialActor._
 
   val relations = mutable.Map[ActorRef, Double](self -> MaxRelation)
 
@@ -24,6 +24,7 @@ trait Socialization extends ExternallyTimedActor {
 
   def socialize(): Unit = {
     println("Blah blah")
+    spendTime()
     socialPool ! Talk
   }
 

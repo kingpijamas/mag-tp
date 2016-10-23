@@ -5,26 +5,32 @@ import scala.util.Random
 
 import breeze.linalg.DenseVector
 import breeze.linalg.accumulate
+import scala.collection.immutable
+import scala.collection.generic.CanBuildFrom
+import scala.collection.TraversableLike
+import scala.collection.SetLike
 
 object ProbabilityBag {
-  case class Entry[T](accumProb: Double, prob: Double, value: T)
+  case class Entry[T](accumProb: Double, value: T, prob: Double) {
+    def valueAndProb: (T, Double) = (value, prob)
+  }
 
-  def complete[T](assocs: (Double, T)*): ProbabilityBag[T] = {
+  def complete[T](assocs: (T, Double)*): ProbabilityBag[T] = {
     ProbabilityBag(assocs, complete = true)
   }
 
-  def partial[T](assocs: (Double, T)*): ProbabilityBag[T] = {
+  def partial[T](assocs: (T, Double)*): ProbabilityBag[T] = {
     ProbabilityBag(assocs, complete = false)
   }
 
-  def apply[T](assocs: Traversable[(Double, T)], complete: Boolean = false): ProbabilityBag[T] = {
-    validate(assocs.map(_._1), complete)
+  def apply[T](assocs: Iterable[(T, Double)], complete: Boolean = false): ProbabilityBag[T] = {
+    validate(assocs.map(_._2), complete)
 
-    val sortedAssocs = assocs.toSeq.sortBy(_._1)
-    val sortedProbs = DenseVector(sortedAssocs.map(_._1): _*)
+    val sortedAssocs = assocs.toSeq.sortBy(_._2)
+    val sortedProbs = DenseVector(sortedAssocs.map(_._2): _*)
     val accumProbs = accumulate(sortedProbs).toArray(implicitly[ClassTag[Double]])
     val entries = accumProbs.zip(sortedAssocs).map {
-      case (accumProb, (prob, value)) => Entry(accumProb, prob, value)
+      case (accumProb, (value, prob)) => Entry(accumProb, value, prob)
     }
     new ProbabilityBag(entries, complete)
   }
@@ -53,14 +59,25 @@ object ProbabilityBag {
   }
 }
 
-class ProbabilityBag[T](entries: Traversable[ProbabilityBag.Entry[T]], complete: Boolean) {
-  // TODO extends immutable.Map[T, Double] {
+class ProbabilityBag[T](
+    entries: Iterable[ProbabilityBag.Entry[T]],
+    complete: Boolean) {
   import ProbabilityBag._
+
+  def iterator: Iterator[T] = entries.iterator.map(_.value)
+
+  // TODO: there must be a better way to do this
+  def map[U](f: T => U): ProbabilityBag[U] = {
+    val newEntries = entries.map {
+      case Entry(_, value, prob) => (f(value), prob)
+    }
+    ProbabilityBag(newEntries, complete)
+  }
 
   def getRand: Option[T] = {
     val rand = Random.nextDouble
     entries.collectFirst {
-      case Entry(accumProb, _, value) if accumProb > rand => value
+      case Entry(accumProb, value, _) if accumProb > rand => value
     }
   }
 }

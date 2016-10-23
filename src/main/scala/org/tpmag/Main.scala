@@ -41,7 +41,8 @@ object Main extends App {
   val behaviours = Map(
     Work -> 0.5,
     Socialize -> 0.3,
-    Steal -> 0.2).map { case (bh, prob) => (prob, bh) }.toSeq
+    Steal -> 0.2)
+    .toSeq
 
   val employeePool = system.actorOf(
     EmployeePool.props(

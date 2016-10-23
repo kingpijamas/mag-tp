@@ -18,6 +18,7 @@ trait StealingActor extends ExternallyTimedActor {
 
   def steal(amount: Int): Unit = {
     println("Sneaking in...")
+    spendTime()
     theftVictim ! StealingAttempt(time.get, amount)
   }
 
