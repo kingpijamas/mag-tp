@@ -22,6 +22,8 @@ import org.tpmag.util.ReceiveChaining
 import org.tpmag.domain.behaviour.SocialActor
 import org.tpmag.domain.behaviour.StealingActor
 import org.tpmag.domain.behaviour.ProducerActor
+import org.tpmag.domain.behaviour.WitnessingActor
+import org.tpmag.domain.behaviour.TheftVictimActor
 
 object Employee {
   case object Act
@@ -34,49 +36,55 @@ object Employee {
 
   def props(timerFreq: FiniteDuration,
             behaviours: ProbabilityBag[Behaviour],
+            theftVictim: ActorRef @@ CompanyGrounds,
             employees: ActorRef @@ EmployeePool,
-            productionSupervisor: ActorRef @@ ProductionSupervisor,
-            warehouse: ActorRef @@ Warehouse): Props =
+            productionSupervisor: ActorRef @@ ProductionSupervisor): Props =
     Props(wire[Employee])
 }
 
 class Employee(
   val timerFreq: FiniteDuration,
+  val theftVictim: ActorRef @@ CompanyGrounds,
   behaviourOdds: ProbabilityBag[Employee.Behaviour],
   employees: ActorRef @@ EmployeePool,
-  productionSupervisor: ActorRef @@ ProductionSupervisor,
-  warehouse: ActorRef @@ Warehouse)
+  productionSupervisor: ActorRef @@ ProductionSupervisor)
     extends Actor
     with ReceiveChaining
     with ExternallyTimedActor
     with ProducerActor
     with SocialActor
     with StealingActor
-    with RandomBehaviours {
+    with RandomBehaviours
+    with WitnessingActor {
   import Employee._
+  import TheftVictimActor._
 
   def timer = productionSupervisor
   def productionReceiver = productionSupervisor
   def socialPool = employees
-  def theftVictim = warehouse
 
   def timerMessage = Act
   def randomBehaviourTrigger = Act
 
   val behaviours: ProbabilityBag[() => _] =
     behaviourOdds.map {
-      case Work      => (() => produce())
+      case Work      => produce _
       case Socialize => socialize _
       case Steal     => (() => steal(10)) // FIXME: magic number!
     }
+
+  def onTheft(crime: StealingAttempt): Unit = {
+    // TODO
+  }
 
   def receiveOrders: Receive = {
     case Fire => context.stop(self)
   }
 
-  def timed: Receive =
-    actRandomly orElse
-      respondToSocialization orElse
-      stealingFollowup orElse
-      receiveOrders
+  def timed: Receive = chain(
+    actRandomly,
+    respondToSocialization,
+    stealingFollowup,
+    receiveOrders,
+    witness)
 }

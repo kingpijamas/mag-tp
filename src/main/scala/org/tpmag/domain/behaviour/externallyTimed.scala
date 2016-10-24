@@ -30,11 +30,11 @@ trait ExternallyTimedActor extends Actor with Scheduled {
 
   def untimed: Receive = {
     case msg if msg == timerMessage =>
-      println(s"$self on $msg: What time is it?")
+      // println(s"$self on $msg: What time is it?")
       timer ! GetCurrentTime
 
     case CurrentTime(time) =>
-      println(s"$self: yay, thanks!")
+      // println(s"$self: yay, thanks!")
       this.time = Some(time)
       context.become(timed)
   }
@@ -54,7 +54,7 @@ trait TimerActor extends ChainingActor {
 
   registerReceive {
     case GetCurrentTime =>
-      println(s"$self: oh $sender it's $time")
+      // println(s"$self: oh $sender it's $time")
       sender ! CurrentTime(time)
   }
 }

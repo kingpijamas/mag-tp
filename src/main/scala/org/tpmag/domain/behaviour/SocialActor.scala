@@ -10,6 +10,7 @@ import scala.collection.mutable
 
 object SocialActor {
   val MaxRelation = 1
+  val FriendshipPoint = 0.5
 
   case object Talk
   case class TalkBack(newRelation: Double)
@@ -18,12 +19,12 @@ object SocialActor {
 trait SocialActor extends ExternallyTimedActor {
   import SocialActor._
 
-  val relations = mutable.Map[ActorRef, Double](self -> MaxRelation)
+  val relations = mutable.Map[ActorRef, Double](self -> MaxRelation).withDefaultValue(0)
 
   def socialPool: ActorRef
 
   def socialize(): Unit = {
-    println("Blah blah")
+    // println("Blah blah")
     spendTime()
     socialPool ! Talk
   }
@@ -33,8 +34,7 @@ trait SocialActor extends ExternallyTimedActor {
       recoverTime()
 
     case Talk if sender != self =>
-      val relation: Double = relations.getOrElse(sender, 0) // FIXME: magic number!
-      val newRelation = min(relation + Random.nextDouble, 1) // FIXME: magic number!
+      val newRelation = min(relations(sender) + Random.nextDouble, 1) // FIXME: magic number!
       relations(sender) = newRelation
       context.watch(sender)
       sender ! TalkBack(newRelation)
@@ -42,10 +42,12 @@ trait SocialActor extends ExternallyTimedActor {
     case TalkBack(newRelation) =>
       relations(sender) = newRelation
       context.watch(sender)
-      println(s"$self $relations")
+      // println(s"$self $relations")
 
     case Terminated(employee) =>
       relations -= sender
       println("Goodbye friend!")
   }
+
+  def isFriend(other: ActorRef): Boolean = relations(other) >= FriendshipPoint
 }

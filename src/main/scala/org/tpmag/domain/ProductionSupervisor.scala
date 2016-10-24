@@ -28,7 +28,6 @@ object ProductionSupervisor {
 
   trait PeriodLength
   trait MaxDeviationsAllowed
-  trait EmployeeCount
 
   def props(initialTime: Time,
             periodLength: Int @@ PeriodLength,
@@ -42,7 +41,7 @@ class ProductionSupervisor(
   val initialTime: Time,
   periodLength: Int @@ ProductionSupervisor.PeriodLength,
   maxDeviationsAllowed: Double @@ ProductionSupervisor.MaxDeviationsAllowed,
-  employeeCount: Int @@ ProductionSupervisor.EmployeeCount,
+  employeeCount: Int @@ EmployeeCount,
   val timerFreq: FiniteDuration)
     extends ProductionReceiver with TimerActor with Scheduled {
   import Employee._

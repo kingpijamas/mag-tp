@@ -4,16 +4,17 @@ import scala.concurrent.duration.DurationDouble
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 
+import org.tpmag.domain.CompanyGrounds
 import org.tpmag.domain.Employee.Socialize
 import org.tpmag.domain.Employee.Steal
 import org.tpmag.domain.Employee.Work
+import org.tpmag.domain.EmployeeCount
 import org.tpmag.domain.EmployeePool
 import org.tpmag.domain.ProductionSupervisor
-import org.tpmag.domain.ProductionSupervisor.EmployeeCount
 import org.tpmag.domain.ProductionSupervisor.MaxDeviationsAllowed
 import org.tpmag.domain.ProductionSupervisor.PeriodLength
 import org.tpmag.domain.Warehouse
-
+import scala.collection.immutable
 import com.softwaremill.tagging.Tagger
 
 import akka.actor.ActorSystem
@@ -23,14 +24,14 @@ object Main extends App {
 
   val maxDeviationsAllowed = 1D
   val periodLength = 5
-  val employeeCount = 10
+  val employeeCount = 10.taggedWith[EmployeeCount]
   val productionSupervisor = system.actorOf(
     ProductionSupervisor.props(
       initialTime = 0L,
       timerFreq = 10 seconds,
       periodLength = periodLength.taggedWith[PeriodLength],
       maxDeviationsAllowed = maxDeviationsAllowed.taggedWith[MaxDeviationsAllowed],
-      employeeCount = employeeCount.taggedWith[EmployeeCount]))
+      employeeCount = employeeCount))
     .taggedWith[ProductionSupervisor]
 
   val warehouse = system.actorOf(
@@ -38,17 +39,17 @@ object Main extends App {
       catchingPropensity = 0.5))
     .taggedWith[Warehouse]
 
-  val behaviours = Map(
+  val behaviours = immutable.Map(
     Work -> 0.5,
     Socialize -> 0.3,
     Steal -> 0.2)
     .toSeq
 
-  val employeePool = system.actorOf(
-    EmployeePool.props(
-      employeeCount,
-      behaviours,
+  val companyGrounds = system.actorOf(
+    CompanyGrounds.props(
+      employeeCount = employeeCount,
       timerFreq = 0.5 seconds,
-      productionSupervisor,
-      warehouse))
+      behaviours = behaviours,
+      warehouse = warehouse,
+      productionSupervisor = productionSupervisor))
 }

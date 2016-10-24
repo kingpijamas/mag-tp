@@ -11,8 +11,8 @@ trait ProducerActor extends ExternallyTimedActor {
   import ProductionReceiver._
 
   def productionReceiver: ActorRef
-  
-  def produce(amount: Int = 1): Unit = {
+
+  def produce(): Unit = {
     println("Working")
     spendTime()
     productionReceiver ! Produce(time.get)

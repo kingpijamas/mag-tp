@@ -16,13 +16,14 @@ import akka.actor.Terminated
 import akka.routing.ActorRefRoutee
 import akka.routing.RoundRobinRoutingLogic
 import akka.routing.Router
+import akka.routing.RandomRoutingLogic
 
 object EmployeePool {
   def props(targetEmployeeCount: Int,
             propensities: Seq[(Behaviour, Double)],
             timerFreq: FiniteDuration,
             productionSupervisor: ActorRef @@ ProductionSupervisor,
-            warehouse: ActorRef @@ Warehouse): Props = {
+            companyGrounds: ActorRef @@ CompanyGrounds): Props = {
     val behaviours = ProbabilityBag.complete(propensities: _*) // TODO: make this per-employee
     Props(wire[EmployeePool])
   }
@@ -33,14 +34,14 @@ class EmployeePool(
   behaviours: ProbabilityBag[Behaviour],
   timerFreq: FiniteDuration,
   productionSupervisor: ActorRef @@ ProductionSupervisor,
-  warehouse: ActorRef @@ Warehouse)
+  companyGrounds: ActorRef @@ CompanyGrounds)
     extends Actor {
 
   var nextId = 0
   var employeeCount = 0
   var router = {
     val employees = Vector.fill(targetEmployeeCount) { ActorRefRoutee(hireEmployee()) }
-    Router(RoundRobinRoutingLogic(), employees)
+    Router(RandomRoutingLogic(), employees)
   }
 
   def receive = {
@@ -61,9 +62,9 @@ class EmployeePool(
       Employee.props(
         timerFreq,
         behaviours,
+        companyGrounds,
         self.taggedWith[EmployeePool],
-        productionSupervisor,
-        warehouse),
+        productionSupervisor),
       s"employee$nextId")
 
     context.watch(employee)
