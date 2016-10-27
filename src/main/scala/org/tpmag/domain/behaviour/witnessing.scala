@@ -16,18 +16,6 @@ trait WitnessingActor extends SocialActor {
       println(s"$self :O I saw $sender do $crime")
       onTheft(crime)
   }
-
-  //  def proposeCulprit: Option[ActorRef] = {
-  //    val knownNonFriends = relations.filter { case (other, _) => !isFriend(other) }
-  //    // socialPool ! AcquaintRandom
-  //
-  //    if (!knownNonFriends.isEmpty) {
-  //      val (other, _) = relations.minBy { case (_, relation) => relation }
-  //      Some(other)
-  //    } else {
-  //      None
-  //    }
-  //  }
 }
 
 trait CrimeEnvironment extends ChainingActor {
