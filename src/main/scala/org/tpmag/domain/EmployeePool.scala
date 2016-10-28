@@ -19,9 +19,12 @@ import akka.routing.Router
 import akka.routing.RandomRoutingLogic
 
 object EmployeePool {
+  trait TimerFreq
+
   def props(targetEmployeeCount: Int,
             propensities: Seq[(Behaviour, Double)],
-            timerFreq: FiniteDuration,
+            timerFreq: FiniteDuration @@ TimerFreq,
+            guiltyProbability: Double,
             productionSupervisor: ActorRef @@ ProductionSupervisor,
             companyGrounds: ActorRef @@ CompanyGrounds): Props = {
     val behaviours = ProbabilityBag.complete(propensities: _*) // TODO: make this per-employee
@@ -33,6 +36,7 @@ class EmployeePool(
   targetEmployeeCount: Int,
   behaviours: ProbabilityBag[Behaviour],
   timerFreq: FiniteDuration,
+  guiltyProbability: Double,
   productionSupervisor: ActorRef @@ ProductionSupervisor,
   companyGrounds: ActorRef @@ CompanyGrounds)
     extends Actor {
@@ -62,6 +66,7 @@ class EmployeePool(
       Employee.props(
         timerFreq,
         behaviours,
+        guiltyProbability,
         companyGrounds,
         self.taggedWith[EmployeePool],
         productionSupervisor),

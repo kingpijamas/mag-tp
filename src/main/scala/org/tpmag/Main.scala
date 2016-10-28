@@ -1,5 +1,6 @@
 package org.tpmag
 
+import scala.collection.immutable
 import scala.concurrent.duration.DurationDouble
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
@@ -9,12 +10,14 @@ import org.tpmag.domain.Employee.Socialize
 import org.tpmag.domain.Employee.Steal
 import org.tpmag.domain.Employee.Work
 import org.tpmag.domain.EmployeeCount
-import org.tpmag.domain.EmployeePool
+import org.tpmag.domain.EmployeePool.TimerFreq
+import org.tpmag.domain.HumanResources.AccusationReceptionTime
+import org.tpmag.domain.HumanResources.VeredictVotesReceptionTime
 import org.tpmag.domain.ProductionSupervisor
 import org.tpmag.domain.ProductionSupervisor.MaxDeviationsAllowed
 import org.tpmag.domain.ProductionSupervisor.PeriodLength
 import org.tpmag.domain.Warehouse
-import scala.collection.immutable
+
 import com.softwaremill.tagging.Tagger
 
 import akka.actor.ActorSystem
@@ -45,11 +48,16 @@ object Main extends App {
     Steal -> 0.2)
     .toSeq
 
+  val employeeTimerFreq = 0.5 seconds
+  val accusationReceptionTime = 5 seconds
+  val veredictVotesReceptionTime = 5 seconds
   val companyGrounds = system.actorOf(
     CompanyGrounds.props(
       employeeCount = employeeCount,
-      timerFreq = 0.5 seconds,
+      timerFreq = employeeTimerFreq.taggedWith[TimerFreq],
       behaviours = behaviours,
       warehouse = warehouse,
-      productionSupervisor = productionSupervisor))
+      productionSupervisor = productionSupervisor,
+      accusationReceptionTime = accusationReceptionTime.taggedWith[AccusationReceptionTime],
+      veredictVotesReceptionTime = veredictVotesReceptionTime.taggedWith[VeredictVotesReceptionTime]))
 }

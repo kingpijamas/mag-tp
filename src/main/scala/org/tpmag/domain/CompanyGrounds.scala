@@ -1,27 +1,29 @@
 package org.tpmag.domain
 
-import Employee.Behaviour
-import scala.math._
-import scala.collection.mutable
+import scala.concurrent.duration.FiniteDuration
+import scala.math.ceil
+import scala.math.min
 import scala.util.Random
 
-import com.softwaremill.macwire.wire
-import com.softwaremill.tagging._
-
-import akka.actor.Actor
-import akka.actor.Props
-import akka.actor.actorRef2Scala
+import org.tpmag.domain.behaviour.CrimeEnvironment
 import org.tpmag.domain.behaviour.TheftVictimActor
 
-import akka.actor.Actor
-import org.tpmag.domain.behaviour.CrimeEnvironment
+import com.softwaremill.macwire.wire
+import com.softwaremill.tagging.{ @@ => @@ }
+import com.softwaremill.tagging.Tagger
+
+import Employee.Behaviour
+import EmployeePool.TimerFreq
+import HumanResources.AccusationReceptionTime
+import HumanResources.VeredictVotesReceptionTime
 import akka.actor.ActorRef
-import org.tpmag.util.ProbabilityBag
-import scala.concurrent.duration.FiniteDuration
+import akka.actor.Props
 
 object CompanyGrounds {
   def props(employeeCount: Int @@ EmployeeCount,
-            timerFreq: FiniteDuration,
+            timerFreq: FiniteDuration @@ TimerFreq,
+            accusationReceptionTime: FiniteDuration @@ AccusationReceptionTime,
+            veredictVotesReceptionTime: FiniteDuration @@ VeredictVotesReceptionTime,
             behaviours: Seq[(Behaviour, Double)],
             warehouse: ActorRef @@ Warehouse,
             productionSupervisor: ActorRef @@ ProductionSupervisor): Props =
@@ -30,20 +32,14 @@ object CompanyGrounds {
 
 class CompanyGrounds(
   val employeeCount: Int @@ EmployeeCount,
-  timerFreq: FiniteDuration,
+  timerFreq: FiniteDuration @@ TimerFreq,
+  accusationReceptionTime: FiniteDuration @@ AccusationReceptionTime,
+  veredictVotesReceptionTime: FiniteDuration @@ VeredictVotesReceptionTime,
   behaviours: Seq[(Behaviour, Double)],
   warehouse: ActorRef @@ Warehouse,
   productionSupervisor: ActorRef @@ ProductionSupervisor)
     extends CrimeEnvironment {
   import TheftVictimActor._
-
-  //  val employeePool = system.actorOf(
-  //    EmployeePool.props(
-  //      employeeCount,
-  //      behaviours,
-  //      timerFreq = 0.5 seconds,
-  //      productionSupervisor))
-  //    .taggedWith[EmployeePool]
 
   val employeePool = context.actorOf(EmployeePool.props(
     employeeCount,
@@ -51,6 +47,10 @@ class CompanyGrounds(
     timerFreq,
     productionSupervisor,
     companyGrounds = self.taggedWith[CompanyGrounds]))
+
+  val humanResources = context.actorOf(HumanResources.props(accusationReceptionTime,
+    veredictVotesReceptionTime,
+    juryPool = employeePool.taggedWith[EmployeePool]))
 
   def witnessPool: ActorRef = employeePool
 

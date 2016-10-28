@@ -24,6 +24,8 @@ import org.tpmag.domain.behaviour.StealingActor
 import org.tpmag.domain.behaviour.ProducerActor
 import org.tpmag.domain.behaviour.WitnessingActor
 import org.tpmag.domain.behaviour.TheftVictimActor
+import org.tpmag.domain.behaviour.JuryActor
+import org.tpmag.domain.behaviour.AccusingActor
 
 object Employee {
   case object Act
@@ -36,6 +38,7 @@ object Employee {
 
   def props(timerFreq: FiniteDuration,
             behaviours: ProbabilityBag[Behaviour],
+            guiltyProbability: Double,
             theftVictim: ActorRef @@ CompanyGrounds,
             employees: ActorRef @@ EmployeePool,
             productionSupervisor: ActorRef @@ ProductionSupervisor): Props =
@@ -45,6 +48,7 @@ object Employee {
 class Employee(
   val timerFreq: FiniteDuration,
   val theftVictim: ActorRef @@ CompanyGrounds,
+  guiltyProbability: Double,
   behaviourOdds: ProbabilityBag[Employee.Behaviour],
   employees: ActorRef @@ EmployeePool,
   productionSupervisor: ActorRef @@ ProductionSupervisor)
@@ -55,9 +59,12 @@ class Employee(
     with SocialActor
     with StealingActor
     with RandomBehaviours
-    with WitnessingActor {
+    with WitnessingActor
+    with AccusingActor
+    with JuryActor {
   import Employee._
   import TheftVictimActor._
+  import JuryActor._
 
   def timer = productionSupervisor
   def productionReceiver = productionSupervisor
@@ -74,8 +81,32 @@ class Employee(
     }
 
   def onTheft(crime: StealingAttempt): Unit = {
-    // TODO
+    val knownNonFriends = relations.filter { case (other, _) => !isFriend(other) }
+
+    if (!knownNonFriends.isEmpty) {
+      val (other, _) = relations.minBy { case (_, relation) => relation }
+      accuse(other, crime)
+    }
+    // TODO: 'else' flow
+
+    //  def proposeCulprit: Option[ActorRef] = {
+    //    val knownNonFriends = relations.filter { case (other, _) => !isFriend(other) }
+    //
+    //    if (!knownNonFriends.isEmpty) {
+    //      val (other, _) = relations.minBy { case (_, relation) => relation }
+    //      Some(other)
+    //    } else {
+    //      None
+    //    }
+    //  }
   }
+
+  def giveVeredict(accused: ActorRef, crime: StealingAttempt): Veredict =
+    // FIXME
+    if (Random.nextDouble < guiltyProbability)
+      Guilty
+    else
+      NotGuilty
 
   def receiveOrders: Receive = {
     case Fire => context.stop(self)
