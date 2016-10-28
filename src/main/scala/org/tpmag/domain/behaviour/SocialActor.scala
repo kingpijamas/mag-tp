@@ -24,7 +24,7 @@ trait SocialActor extends ExternallyTimedActor {
   def socialPool: ActorRef
 
   def socialize(): Unit = {
-    // println("Blah blah")
+    println(s"$self: Blah blah")
     spendTime()
     socialPool ! Talk
   }
@@ -42,11 +42,11 @@ trait SocialActor extends ExternallyTimedActor {
     case TalkBack(newRelation) =>
       relations(sender) = newRelation
       context.watch(sender)
-      // println(s"$self $relations")
+      println(s"$self: Hello back!") // $relations
 
     case Terminated(employee) =>
       relations -= sender
-      println("Goodbye friend!")
+      println(s"$self: Goodbye friend!")
   }
 
   def isFriend(other: ActorRef): Boolean = relations(other) >= FriendshipPoint

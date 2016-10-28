@@ -17,13 +17,14 @@ trait StealingActor extends ExternallyTimedActor {
   def theftVictim: ActorRef
 
   def steal(amount: Int): Unit = {
-    println("Sneaking in...")
     spendTime()
-    theftVictim ! StealingAttempt(time.get, amount)
+    val victim = theftVictim
+    println(s"$self: Sneaking in $victim...")
+    victim ! StealingAttempt(time.get, amount)
   }
 
   def stealingFollowup: Receive = {
-    case Success(_) => println("Bwahaha!")
+    case Success(_) => println(s"$self: Bwahaha!")
   }
 }
 
@@ -44,9 +45,10 @@ trait TheftVictimActor extends ChainingActor {
       val thiefCaught = Random.nextDouble < catchingPropensity
 
       if (thiefCaught) {
-        println("Aha! thief!")
+        println(s"$self: Aha! $sender is a thief!")
         onTheftFailure(time, amount)
       } else {
+        println(s"$self: Take my goods $sender")
         onTheftSuccess(time, amount)
         sender ! Success(amount)
       }

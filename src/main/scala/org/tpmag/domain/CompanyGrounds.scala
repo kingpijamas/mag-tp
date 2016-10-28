@@ -32,7 +32,7 @@ class CompanyGrounds(
   val employeeCount: Int @@ EmployeeCount,
   timerFreq: FiniteDuration,
   behaviours: Seq[(Behaviour, Double)],
-  warehouse: ActorRef @@ Warehouse,
+  val warehouse: ActorRef @@ Warehouse,
   productionSupervisor: ActorRef @@ ProductionSupervisor)
     extends CrimeEnvironment {
   import TheftVictimActor._

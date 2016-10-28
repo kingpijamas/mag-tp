@@ -13,7 +13,7 @@ trait WitnessingActor extends SocialActor {
     case _: StealingAttempt if sender == this => // disregard it, I know I'm stealing
 
     case crime: StealingAttempt =>
-      println(s"$self :O I saw $sender do $crime")
+      println(s"$self: :O I saw $sender commit $crime")
       onTheft(crime)
   }
 
@@ -45,6 +45,7 @@ trait CrimeEnvironment extends ChainingActor {
       (0 until witnessCount(crimeAttempt)).foreach { _ =>
         alert(witnessPool, crimeAttempt)
       }
+      notifyVictim(victim, crimeAttempt)
   }
 
   private[this] def alert(who: ActorRef, crime: Any): Unit = { who.forward(crime) }

@@ -70,7 +70,7 @@ class Employee(
     behaviourOdds.map {
       case Work      => produce _
       case Socialize => socialize _
-      case Steal     => (() => steal(10)) // FIXME: magic number!
+      case Steal     => (() => steal(1)) // FIXME: magic number!
     }
 
   def onTheft(crime: StealingAttempt): Unit = {

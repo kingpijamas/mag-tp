@@ -24,11 +24,11 @@ object Main extends App {
 
   val maxDeviationsAllowed = 1D
   val periodLength = 5
-  val employeeCount = 10.taggedWith[EmployeeCount]
+  val employeeCount = 3.taggedWith[EmployeeCount]
   val productionSupervisor = system.actorOf(
     ProductionSupervisor.props(
       initialTime = 0L,
-      timerFreq = 10 seconds,
+      timerFreq = 5 seconds,
       periodLength = periodLength.taggedWith[PeriodLength],
       maxDeviationsAllowed = maxDeviationsAllowed.taggedWith[MaxDeviationsAllowed],
       employeeCount = employeeCount))
@@ -40,15 +40,15 @@ object Main extends App {
     .taggedWith[Warehouse]
 
   val behaviours = immutable.Map(
-    Work -> 0.5,
-    Socialize -> 0.3,
-    Steal -> 0.2)
+    Work -> 0.7,
+    Socialize -> 0.25,
+    Steal -> 0.05)
     .toSeq
 
   val companyGrounds = system.actorOf(
     CompanyGrounds.props(
       employeeCount = employeeCount,
-      timerFreq = 0.5 seconds,
+      timerFreq = 1 seconds,
       behaviours = behaviours,
       warehouse = warehouse,
       productionSupervisor = productionSupervisor))

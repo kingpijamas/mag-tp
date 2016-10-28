@@ -55,7 +55,7 @@ class ProductionSupervisor(
       val periodTimes = registeredTimes.sorted.take(periodLength)
       val (from, to) = (periodTimes.min, periodTimes.max)
       val laziesFound = lazies(from, to)
-      println(s"\nFound ${laziesFound.size} lazies, will fire them")
+      println(s"\n\n$self: Found ${laziesFound.size} lazies, will fire them")
       laziesFound.foreach(_ ! Fire)
       producersPerTime --= (from to to)
   }

@@ -13,7 +13,7 @@ trait ProducerActor extends ExternallyTimedActor {
   def productionReceiver: ActorRef
 
   def produce(): Unit = {
-    println("Working")
+    println(s"$self: Working")
     spendTime()
     productionReceiver ! Produce(time.get)
   }
