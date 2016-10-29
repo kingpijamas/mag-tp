@@ -1,14 +1,11 @@
 package org.tpmag.domain
 
-import java.lang.Math.min
-
 import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
-import scala.util.Random
 
-import org.tpmag.domain.behaviour.ExternallyTimedActor
-import org.tpmag.util.ProbabilityBag
 import org.tpmag.domain.behaviour.RandomBehaviours
+import org.tpmag.util.ProbabilityBag
+import org.tpmag.util.Scheduled
 
 import com.softwaremill.macwire.wire
 import com.softwaremill.tagging.{ @@ => @@ }
@@ -16,75 +13,83 @@ import com.softwaremill.tagging.{ @@ => @@ }
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props
-import akka.actor.Terminated
 import akka.actor.actorRef2Scala
-import org.tpmag.util.ReceiveChaining
-import org.tpmag.domain.behaviour.SocialActor
-import org.tpmag.domain.behaviour.StealingActor
-import org.tpmag.domain.behaviour.ProducerActor
-import org.tpmag.domain.behaviour.WitnessingActor
-import org.tpmag.domain.behaviour.TheftVictimActor
 
 object Employee {
+  // messages
   case object Act
-  case object Fire
+  case class Paycheck(employee: ActorRef, amount: Double)
 
   sealed trait Behaviour
-  case object Work extends Behaviour
-  case object Socialize extends Behaviour
-  case object Steal extends Behaviour
+  case object WorkBehaviour extends Behaviour
+  case object LoiterBehaviour extends Behaviour
 
-  def props(timerFreq: FiniteDuration,
-            behaviours: ProbabilityBag[Behaviour],
-            theftVictim: ActorRef @@ CompanyGrounds,
-            employees: ActorRef @@ EmployeePool,
-            productionSupervisor: ActorRef @@ ProductionSupervisor): Props =
+  case class StatusPerception(totalEarnings: Double = 0D, totalWork: Int = 0, totalLoitering: Int = 0) {
+    override def toString: String =
+      s"StatusPerception(totalEarnings=$totalEarnings, totalWork=$totalWork, totalLoitering=$totalLoitering)"
+  }
+
+  def props(envy: Double,
+            behaviours: ProbabilityBag[Employee.Behaviour],
+            timerFreq: FiniteDuration,
+            workArea: ActorRef @@ WorkArea): Props =
     Props(wire[Employee])
 }
 
 class Employee(
+  val envy: Double,
   val timerFreq: FiniteDuration,
-  val theftVictim: ActorRef @@ CompanyGrounds,
-  behaviourOdds: ProbabilityBag[Employee.Behaviour],
-  employees: ActorRef @@ EmployeePool,
-  productionSupervisor: ActorRef @@ ProductionSupervisor)
-    extends Actor
-    with ReceiveChaining
-    with ExternallyTimedActor
-    with ProducerActor
-    with SocialActor
-    with StealingActor
-    with RandomBehaviours
-    with WitnessingActor {
+  baseBehaviours: ProbabilityBag[Employee.Behaviour],
+  val workArea: ActorRef @@ WorkArea)
+    extends Actor with RandomBehaviours with Scheduled {
   import Employee._
-  import TheftVictimActor._
+  import WorkArea._
 
-  def timer = productionSupervisor
-  def productionReceiver = productionSupervisor
-  def socialPool = employees
+  def timerMessage: Any = Act
+  def randomBehaviourTrigger: Any = Act
 
-  def timerMessage = Act
-  def randomBehaviourTrigger = Act
+  val perceptionsByEmployee = mutable.Map[ActorRef, StatusPerception]()
+    .withDefaultValue(StatusPerception())
 
-  val behaviours: ProbabilityBag[() => _] =
-    behaviourOdds.map {
-      case Work      => produce _
-      case Socialize => socialize _
-      case Steal     => (() => steal(1)) // FIXME: magic number!
-    }
-
-  def onTheft(crime: StealingAttempt): Unit = {
-    // TODO
+  val behaviours: ProbabilityBag[() => _] = baseBehaviours map {
+    case WorkBehaviour   => work _
+    case LoiterBehaviour => loiter _
   }
 
-  def receiveOrders: Receive = {
-    case Fire => context.stop(self)
+  def receive = actRandomly orElse respondToStimuli
+
+  private[this] def respondToStimuli: Receive = {
+    case Paycheck(employee, amount) =>
+      updatePerception(employee) { oldPerception =>
+        oldPerception.copy(totalEarnings = oldPerception.totalEarnings + amount)
+      }
+
+    case Work =>
+      updatePerception(sender) { oldPerception =>
+        oldPerception.copy(totalWork = oldPerception.totalWork + 1)
+      }
+
+    case Loiter =>
+      updatePerception(sender) { oldPerception =>
+        oldPerception.copy(totalLoitering = oldPerception.totalLoitering + 1)
+      }
   }
 
-  def timed: Receive = chain(
-    actRandomly,
-    respondToSocialization,
-    stealingFollowup,
-    receiveOrders,
-    witness)
+  private[this] def updatePerception(employee: ActorRef)(f: (StatusPerception => StatusPerception)): Unit = {
+    val currentPerception = perceptionsByEmployee(employee)
+    perceptionsByEmployee(employee) = f(currentPerception)
+    println(s"${self.path}: ${employee.path} -> ${perceptionsByEmployee(employee)}")
+  }
+
+  private[this] def work(): Unit = {
+    println(s"$self: Working")
+    workArea ! Work
+  }
+
+  private[this] def loiter(): Unit = {
+    println(s"$self: Loitering")
+    workArea ! Loiter
+  }
+
+  private[this] def ownStatus = perceptionsByEmployee(self)
 }

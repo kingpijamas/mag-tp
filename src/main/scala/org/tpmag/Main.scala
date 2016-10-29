@@ -1,20 +1,17 @@
 package org.tpmag
 
+import scala.collection.immutable
 import scala.concurrent.duration.DurationDouble
-import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 
-import org.tpmag.domain.CompanyGrounds
-import org.tpmag.domain.Employee.Socialize
-import org.tpmag.domain.Employee.Steal
-import org.tpmag.domain.Employee.Work
-import org.tpmag.domain.EmployeeCount
-import org.tpmag.domain.EmployeePool
-import org.tpmag.domain.ProductionSupervisor
-import org.tpmag.domain.ProductionSupervisor.MaxDeviationsAllowed
-import org.tpmag.domain.ProductionSupervisor.PeriodLength
-import org.tpmag.domain.Warehouse
-import scala.collection.immutable
+import org.tpmag.domain.Employee.LoiterBehaviour
+import org.tpmag.domain.Employee.WorkBehaviour
+import org.tpmag.domain.WorkArea
+import org.tpmag.domain.WorkArea.Broadcastability
+import org.tpmag.domain.WorkArea.EmployeeCount
+import org.tpmag.domain.WorkArea.EmployeeTimerFreq
+import org.tpmag.domain.WorkArea.EmployerTimerFreq
+
 import com.softwaremill.tagging.Tagger
 
 import akka.actor.ActorSystem
@@ -22,34 +19,20 @@ import akka.actor.ActorSystem
 object Main extends App {
   val system = ActorSystem("tp-mag")
 
-  val maxDeviationsAllowed = 1D
-  val periodLength = 5
-  val employeeCount = 3.taggedWith[EmployeeCount]
-  val productionSupervisor = system.actorOf(
-    ProductionSupervisor.props(
-      initialTime = 0L,
-      timerFreq = 5 seconds,
-      periodLength = periodLength.taggedWith[PeriodLength],
-      maxDeviationsAllowed = maxDeviationsAllowed.taggedWith[MaxDeviationsAllowed],
-      employeeCount = employeeCount))
-    .taggedWith[ProductionSupervisor]
-
-  val warehouse = system.actorOf(
-    Warehouse.props(
-      catchingPropensity = 0.5))
-    .taggedWith[Warehouse]
-
   val behaviours = immutable.Map(
-    Work -> 0.7,
-    Socialize -> 0.25,
-    Steal -> 0.05)
-    .toSeq
+    WorkBehaviour -> 0.75,
+    LoiterBehaviour -> 0.25)
 
-  val companyGrounds = system.actorOf(
-    CompanyGrounds.props(
-      employeeCount = employeeCount,
-      timerFreq = 1 seconds,
-      behaviours = behaviours,
-      warehouse = warehouse,
-      productionSupervisor = productionSupervisor))
+  val targetEmployeeCount = 5
+  val broadcastability = 5
+  val employeeTimerFreq = 0.5 seconds
+  val employerTimerFreq = employeeTimerFreq * 5
+
+  val workArea = system.actorOf(WorkArea.props(
+    targetEmployeeCount = targetEmployeeCount.taggedWith[EmployeeCount],
+    broadcastability = broadcastability.taggedWith[Broadcastability],
+    envy = 0.25,
+    behaviours = behaviours.toSeq,
+    employeeTimerFreq = employeeTimerFreq.taggedWith[EmployeeTimerFreq],
+    employerTimerFreq = employerTimerFreq.taggedWith[EmployerTimerFreq]))
 }

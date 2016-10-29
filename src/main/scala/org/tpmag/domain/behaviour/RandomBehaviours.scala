@@ -1,9 +1,11 @@
 package org.tpmag.domain.behaviour
 
 import org.tpmag.util.ProbabilityBag
+import akka.actor.Actor
 
 trait RandomBehaviours {
-  self: ExternallyTimedActor =>
+  this: Actor =>
+  // self: ExternallyTimedActor =>
 
   def behaviours: ProbabilityBag[() => _]
 
