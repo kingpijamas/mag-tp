@@ -1,11 +1,11 @@
-package org.tpmag.domain
+package org.mag.tp.domain
 
 import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
 
-import org.tpmag.domain.behaviour.RandomBehaviours
-import org.tpmag.util.ProbabilityBag
-import org.tpmag.util.Scheduled
+import org.mag.tp.domain.behaviour.RandomBehaviours
+import org.mag.tp.util.ProbabilityBag
+import org.mag.tp.util.Scheduled
 
 import com.softwaremill.macwire.wire
 import com.softwaremill.tagging.{ @@ => @@ }

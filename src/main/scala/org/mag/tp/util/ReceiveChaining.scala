@@ -1,4 +1,4 @@
-package org.tpmag.util
+package org.mag.tp.util
 
 import akka.actor.Actor.Receive
 

@@ -1,16 +1,16 @@
-package org.tpmag
+package org.mag.tp
 
 import scala.collection.immutable
 import scala.concurrent.duration.DurationDouble
 import scala.language.postfixOps
 
-import org.tpmag.domain.Employee.LoiterBehaviour
-import org.tpmag.domain.Employee.WorkBehaviour
-import org.tpmag.domain.WorkArea
-import org.tpmag.domain.WorkArea.Broadcastability
-import org.tpmag.domain.WorkArea.EmployeeCount
-import org.tpmag.domain.WorkArea.EmployeeTimerFreq
-import org.tpmag.domain.WorkArea.EmployerTimerFreq
+import org.mag.tp.domain.Employee.LoiterBehaviour
+import org.mag.tp.domain.Employee.WorkBehaviour
+import org.mag.tp.domain.WorkArea
+import org.mag.tp.domain.WorkArea.Broadcastability
+import org.mag.tp.domain.WorkArea.EmployeeCount
+import org.mag.tp.domain.WorkArea.EmployeeTimerFreq
+import org.mag.tp.domain.WorkArea.EmployerTimerFreq
 
 import com.softwaremill.tagging.Tagger
 

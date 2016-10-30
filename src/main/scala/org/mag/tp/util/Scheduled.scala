@@ -1,4 +1,4 @@
-package org.tpmag.util
+package org.mag.tp.util
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt

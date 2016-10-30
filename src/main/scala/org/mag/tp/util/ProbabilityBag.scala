@@ -1,4 +1,4 @@
-package org.tpmag.util
+package org.mag.tp.util
 
 import scala.reflect.ClassTag
 import scala.util.Random
