@@ -1,7 +1,8 @@
 package org.mag.tp.domain.behaviour
 
-import akka.actor.Actor
 import org.mag.tp.util.ProbabilityBag
+
+import akka.actor.Actor
 
 trait RandomBehaviours {
   this: Actor =>

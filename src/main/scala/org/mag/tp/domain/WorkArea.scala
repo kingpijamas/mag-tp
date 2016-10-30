@@ -2,6 +2,7 @@ package org.mag.tp.domain
 
 import scala.concurrent.duration.FiniteDuration
 
+import org.mag.tp.util.ProbabilityBag
 
 import com.softwaremill.macwire.wire
 import com.softwaremill.tagging.{ @@ => @@ }
@@ -19,7 +20,6 @@ import akka.actor.Terminated
 import akka.routing.ActorRefRoutee
 import akka.routing.RandomRoutingLogic
 import akka.routing.Router
-import org.mag.tp.util.ProbabilityBag
 
 object WorkArea {
   // messages

@@ -1,11 +1,7 @@
 package org.mag.tp
 
-import org.scalatra._
-import scalate.ScalateSupport
-import org.fusesource.scalate.{ TemplateEngine, Binding }
-import org.fusesource.scalate.layout.DefaultLayoutStrategy
-import javax.servlet.http.HttpServletRequest
-import collection.mutable
+import org.scalatra.ScalatraServlet
+import org.scalatra.scalate.ScalateSupport
 
 trait MagtpStack extends ScalatraServlet with ScalateSupport {
 

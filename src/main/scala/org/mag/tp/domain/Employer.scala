@@ -3,6 +3,8 @@ package org.mag.tp.domain
 import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
 
+import org.mag.tp.util.Scheduled
+
 import com.softwaremill.macwire.wire
 import com.softwaremill.tagging.{ @@ => @@ }
 
@@ -10,7 +12,6 @@ import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props
 import akka.actor.actorRef2Scala
-import org.mag.tp.util.Scheduled
 
 object Employer {
   case object PaySalaries
