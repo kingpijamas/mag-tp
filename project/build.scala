@@ -47,7 +47,9 @@ object MagtpBuild extends Build {
         // Logging
         "ch.qos.logback"              % "logback-classic"      % "1.1.5"          % "runtime",
         // JSON
-        "org.json4s"                  %% "json4s-jackson"      % "3.4.2"
+        "org.json4s"                  %% "json4s-jackson"      % "3.4.2",
+        // JS
+        "org.webjars"                 % "jquery"               % "3.1.1"
       ),
       scalateTemplateConfig in Compile <<= (sourceDirectory in Compile) { base =>
         Seq(
