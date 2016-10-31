@@ -6,7 +6,6 @@ import org.fusesource.scalate.util.IOUtil
 import java.io.File
 
 trait MagTpStack extends ScalatraServlet with ScalateSupport {
-
   notFound {
     // remove content type in case it was set through an action
     contentType = null

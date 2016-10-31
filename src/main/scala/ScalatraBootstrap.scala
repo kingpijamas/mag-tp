@@ -1,6 +1,6 @@
 import org.mag.tp.ControllersModule
 import org.mag.tp.domain.DomainModule
-import org.mag.tp.domain.ui.FrontendModule
+import org.mag.tp.ui.FrontendModule
 import org.scalatra.LifeCycle
 
 import akka.actor.ActorSystem

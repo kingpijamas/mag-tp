@@ -1,4 +1,4 @@
-package org.mag.tp.domain.ui
+package org.mag.tp.ui
 
 import com.softwaremill.macwire.wire
 import com.softwaremill.tagging.{ @@ => @@ }

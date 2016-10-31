@@ -17,7 +17,8 @@ import org.scalatra.json.JacksonJsonSupport
 
 import akka.actor.ActorRef
 import akka.actor.actorRef2Scala
-import org.mag.tp.domain.ui.FrontendActor
+import org.mag.tp.ui.FrontendActor
+import org.mag.tp.ui.FrontendActor._
 
 class UIController(frontendActor: ActorRef @@ FrontendActor) extends ScalatraServlet
     with JValueResult
@@ -30,12 +31,12 @@ class UIController(frontendActor: ActorRef @@ FrontendActor) extends ScalatraSer
   atmosphere("/") {
     new AtmosphereClient {
       def receive = {
-        // case Connected                               =>
+        case Connected => // ignore
         // case Disconnected(disconnector, Some(error)) =>
         // case Error(Some(error))                      =>
         // case TextMessage(text)                       =>
         case JsonMessage(json) =>
-          frontendActor ! (uuid, json.toString)
+          frontendActor ! Connection(uuid)
 
         case msg =>
           println(msg)
