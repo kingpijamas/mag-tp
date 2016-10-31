@@ -25,7 +25,7 @@ object Employer {
 
 class Employer(
   val timerFreq: FiniteDuration,
-  val workArea: ActorRef @@ WorkArea)
+  val workArea: ActorRef)
     extends Actor with Scheduled {
   import Employee._
   import Employer._

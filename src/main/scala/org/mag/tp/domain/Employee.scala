@@ -45,7 +45,7 @@ class Employee(
   val envy: Double,
   val timerFreq: FiniteDuration,
   baseBehaviours: ProbabilityBag[Employee.Behaviour],
-  val workArea: ActorRef @@ WorkArea)
+  val workArea: ActorRef)
     extends Actor with RandomBehaviours with Scheduled {
   import Employee._
   import WorkArea._

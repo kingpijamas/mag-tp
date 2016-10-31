@@ -28,17 +28,18 @@ trait DomainModule {
   val employeeTimerFreq = (0.5 seconds).taggedWith[Employee.TimerFreq]
   val employerTimerFreq = (employeeTimerFreq * 5).taggedWith[Employer.TimerFreq]
 
-  def employeePropsFactory(workArea: ActorRef @@ WorkArea): Props @@ Employee =
+  lazy val employeePropsFactory = (workArea: ActorRef @@ WorkArea) =>
     wireWith(Employee.props _).taggedWith[Employee]
 
-  def employerPropsFactory(workArea: ActorRef @@ WorkArea): Props @@ Employer =
+  lazy val employerPropsFactory = (workArea: ActorRef @@ WorkArea) =>
     wireWith(Employer.props _).taggedWith[Employer]
 
-  def createWorkArea() : ActorRef @@ WorkArea = {
-    val employeeProps = employeePropsFactory _ // FIXME
-    val employerProps = employerPropsFactory _ // FIXME
+  def createWorkArea(): ActorRef @@ WorkArea = {
+    val employeeProps = employeePropsFactory _
+    val employerProps = employerPropsFactory _
     system.actorOf(wireWith(WorkArea.props _)).taggedWith[WorkArea]
   }
 
   def system: ActorSystem
+  def loggers: Traversable[ActorRef]
 }

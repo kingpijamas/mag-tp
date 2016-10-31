@@ -19,6 +19,7 @@ import akka.routing.ActorRefRoutee
 import akka.routing.RandomRoutingLogic
 import akka.routing.Router
 import org.mag.tp.util.PartiallyBroadcastingActor
+import org.mag.tp.util.MandatoryBroadcastingActor
 
 object WorkArea {
   // messages
@@ -32,7 +33,8 @@ object WorkArea {
   def props(targetEmployeeCount: Int @@ EmployeeCount,
             broadcastability: Int @@ Broadcastability,
             employeePropsFactory: (ActorRef @@ WorkArea => Props @@ Employee),
-            employerPropsFactory: (ActorRef @@ WorkArea => Props @@ Employer)): Props =
+            employerPropsFactory: (ActorRef @@ WorkArea => Props @@ Employer),
+            mandatoryBroadcastables: Traversable[ActorRef]): Props =
     Props(wire[WorkArea])
 }
 
@@ -40,10 +42,13 @@ class WorkArea(
   val targetEmployeeCount: Int @@ EmployeeCount,
   val broadcastability: Int @@ Broadcastability,
   val employeePropsFactory: (ActorRef @@ WorkArea => Props @@ Employee),
-  val employerPropsFactory: (ActorRef @@ WorkArea => Props @@ Employer))
-    extends Actor with PartiallyBroadcastingActor {
+  val employerPropsFactory: (ActorRef @@ WorkArea => Props @@ Employer),
+  val baseMandatoryBroadcastables: Traversable[ActorRef])
+    extends Actor with PartiallyBroadcastingActor with MandatoryBroadcastingActor {
 
-  var employer = context.actorOf(employerPropsFactory(self.taggedWith[WorkArea]))
+  // FIXME: consider crashes!
+  val employer = context.actorOf(employerPropsFactory(self.taggedWith[WorkArea]))  
+  val mandatoryBroadcastables = baseMandatoryBroadcastables ++ Seq(employer)
 
   var nextId = 0
   var employeeCount = 0
@@ -63,8 +68,8 @@ class WorkArea(
     // println(s"$newEmployee hired (#employees = ${employeeCount})")
 
     case msg =>
-      broadcast(msg)
-      employer.tell(msg, sender)
+      partialBroadcast(msg)
+      mandatoryBroadcast(msg)
   }
 
   private[this] def hireEmployee(): ActorRef = {

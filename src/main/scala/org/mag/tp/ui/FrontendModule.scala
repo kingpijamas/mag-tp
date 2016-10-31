@@ -9,9 +9,11 @@ import akka.actor.ActorSystem
 import akka.actor.Props
 
 trait FrontendModule {
-  def system: ActorSystem
-
   def createFrontendActor(): ActorRef @@ FrontendActor = {
     system.actorOf(Props(wire[FrontendActor])).taggedWith[FrontendActor]
   }
+
+  val loggers = Seq[ActorRef]()
+
+  def system: ActorSystem
 }
