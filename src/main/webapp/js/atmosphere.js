@@ -1,6 +1,6 @@
 var socket = $.atmosphere;
 var request = {
-    url: 'http://localhost:8080/akkaServlet/akka',
+    url: 'http://localhost:8080/ui/',
     contentType: 'application/json',
     logLevel: 'debug',
     transport: 'sse',

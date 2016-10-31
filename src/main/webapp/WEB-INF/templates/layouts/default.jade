@@ -6,6 +6,12 @@
 html
   head
     title= title
+    - val jquery = uri("/webjars/jquery/3.1.0/jquery.js")
+    script(type="text/javascript" src="#{jquery}")
+    - val jqueryAtmosphere = uri("/webjars/jquery-atmosphere/2.2.13/jquery.atmosphere.js")
+    script(type="text/javascript" src="#{jqueryAtmosphere}") //js/jquery.atmosphere.js
+    script(type="text/javascript" src="js/atmosphere.js")
+
   body
     #content
       h1= headline

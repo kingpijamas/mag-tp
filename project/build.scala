@@ -49,7 +49,8 @@ object MagtpBuild extends Build {
         // JSON
         "org.json4s"                  %% "json4s-jackson"      % "3.4.2",
         // JS
-        "org.webjars"                 % "jquery"               % "3.1.1"
+        "org.webjars"                 % "jquery-atmosphere"    % "2.2.13",
+        "org.webjars"                 % "jquery"               % "3.1.0"
       ),
       scalateTemplateConfig in Compile <<= (sourceDirectory in Compile) { base =>
         Seq(
@@ -70,4 +71,6 @@ object MagtpBuild extends Build {
       }
     )
   ).enablePlugins(JettyPlugin)
+
+
 }

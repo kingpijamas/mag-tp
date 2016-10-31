@@ -3,6 +3,7 @@ package org.mag.tp
 import org.scalatra.ScalatraServlet
 import org.scalatra.scalate.ScalateSupport
 import org.fusesource.scalate.util.IOUtil
+import java.io.File
 
 trait MagTpStack extends ScalatraServlet with ScalateSupport {
 
