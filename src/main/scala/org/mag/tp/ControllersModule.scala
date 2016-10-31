@@ -2,11 +2,10 @@ package org.mag.tp
 
 import org.mag.tp.ui.FrontendActor
 
-import com.softwaremill.macwire._
-import com.softwaremill.tagging._
+import com.softwaremill.macwire.wire
+import com.softwaremill.tagging.{ @@ => @@ }
 
 import akka.actor.ActorRef
-import org.mag.tp.ui.FrontendModule
 
 trait ControllersModule {
   def frontendActor: ActorRef @@ FrontendActor

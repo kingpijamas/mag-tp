@@ -14,11 +14,14 @@ import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props
 import akka.actor.actorRef2Scala
+import scala.collection.immutable
 
 object Employee {
   // messages
   case object Act
   case class Paycheck(employee: ActorRef, amount: Double)
+
+  trait TimerFreq
 
   sealed trait Behaviour
   case object WorkBehaviour extends Behaviour
@@ -29,11 +32,13 @@ object Employee {
       s"StatusPerception(totalEarnings=$totalEarnings, totalWork=$totalWork, totalLoitering=$totalLoitering)"
   }
 
-  def props(envy: Double,
-            behaviours: ProbabilityBag[Employee.Behaviour],
-            timerFreq: FiniteDuration,
-            workArea: ActorRef @@ WorkArea): Props =
+  def props(behaviours: ProbabilityBag[Behaviour],
+            envy: Double,
+            timerFreq: FiniteDuration @@ TimerFreq,
+            workArea: ActorRef @@ WorkArea): Props = {
+    // val behavioursBag = ProbabilityBag.complete(behaviours: _*) // TODO: make this per-employee
     Props(wire[Employee])
+  }
 }
 
 class Employee(

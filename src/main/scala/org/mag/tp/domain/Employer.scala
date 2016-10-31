@@ -16,7 +16,10 @@ import akka.actor.actorRef2Scala
 object Employer {
   case object PaySalaries
 
-  def props(timerFreq: FiniteDuration, workArea: ActorRef @@ WorkArea): Props =
+  trait TimerFreq
+
+  def props(timerFreq: FiniteDuration @@ TimerFreq,
+            workArea: ActorRef @@ WorkArea): Props =
     Props(wire[Employer])
 }
 
