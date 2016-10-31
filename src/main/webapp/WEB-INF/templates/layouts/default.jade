@@ -6,10 +6,22 @@
 html
   head
     title= title
-    - val jquery = uri("/webjars/jquery/3.1.0/jquery.js")
+    
+    - val jquery = uri("/webjars/jquery/3.1.0/jquery.min.js")
     script(type="text/javascript" src="#{jquery}")
-    - val jqueryAtmosphere = uri("/webjars/jquery-atmosphere/2.2.13/jquery.atmosphere.js")
-    script(type="text/javascript" src="#{jqueryAtmosphere}") //js/jquery.atmosphere.js
+    
+    - val jqueryAtmosphere = uri("/webjars/jquery-atmosphere/2.2.13/jquery.atmosphere-min.js")
+    script(type="text/javascript" src="#{jqueryAtmosphere}")
+
+    - val d3Path = uri("/webjars/d3js/4.2.1/d3.min.js")
+    script(type="text/javascript" src="#{d3Path}")
+
+    - val bootstrapPath = "/webjars/bootstrap/3.3.7-1"
+    - val bootstrapCss = uri(s"$bootstrapPath/css/bootstrap.min.css")
+    link(href="#{bootstrapCss}" rel="stylesheet")
+    - val bootstrapJs = uri(s"$bootstrapPath/js/bootstrap.min.js")
+    script(type="text/javascript" src="#{bootstrapJs}")
+
     script(type="text/javascript" src="js/atmosphere.js")
 
   body
