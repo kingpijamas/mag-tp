@@ -8,8 +8,10 @@ import javax.servlet.ServletContext
 
 class ScalatraBootstrap extends LifeCycle with ControllersModule with DomainModule with FrontendModule {
   val system = ActorSystem("tp-mag")
-  val workArea = createWorkArea()
   val frontendActor = createFrontendActor()
+  val workLogger = createWorkLogger(frontendActor)
+  val loggers = Seq(workLogger)
+  val workArea = createWorkArea()
 
   override def init(context: ServletContext): Unit = {
     context.mount(scalatraController, "/*")

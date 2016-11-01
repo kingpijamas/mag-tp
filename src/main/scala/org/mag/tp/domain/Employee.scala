@@ -83,16 +83,16 @@ class Employee(
   private[this] def updatePerception(employee: ActorRef)(f: (StatusPerception => StatusPerception)): Unit = {
     val currentPerception = perceptionsByEmployee(employee)
     perceptionsByEmployee(employee) = f(currentPerception)
-    println(s"${self.path}: ${employee.path} -> ${perceptionsByEmployee(employee)}")
+    // println(s"${self.path}: ${employee.path} -> ${perceptionsByEmployee(employee)}")
   }
 
   private[this] def work(): Unit = {
-    println(s"$self: Working")
+    // println(s"$self: Working")
     workArea ! Work
   }
 
   private[this] def loiter(): Unit = {
-    println(s"$self: Loitering")
+    // println(s"$self: Loitering")
     workArea ! Loiter
   }
 

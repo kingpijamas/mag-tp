@@ -37,7 +37,7 @@ trait DomainModule {
   def createWorkArea(): ActorRef @@ WorkArea = {
     val employeeProps = employeePropsFactory _
     val employerProps = employerPropsFactory _
-    system.actorOf(wireWith(WorkArea.props _)).taggedWith[WorkArea]
+    system.actorOf(wireWith(WorkArea.props _), "work-area").taggedWith[WorkArea]
   }
 
   def system: ActorSystem

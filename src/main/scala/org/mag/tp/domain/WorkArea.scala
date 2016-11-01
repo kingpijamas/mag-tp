@@ -23,8 +23,9 @@ import org.mag.tp.util.MandatoryBroadcastingActor
 
 object WorkArea {
   // messages
-  object Work
-  object Loiter
+  sealed trait Actions
+  object Work extends Actions
+  object Loiter extends Actions
 
   // type annotations
   trait EmployeeCount
@@ -47,7 +48,7 @@ class WorkArea(
     extends Actor with PartiallyBroadcastingActor with MandatoryBroadcastingActor {
 
   // FIXME: consider crashes!
-  val employer = context.actorOf(employerPropsFactory(self.taggedWith[WorkArea]))  
+  val employer = context.actorOf(employerPropsFactory(self.taggedWith[WorkArea]), "employer")  
   val mandatoryBroadcastables = baseMandatoryBroadcastables ++ Seq(employer)
 
   var nextId = 0
@@ -65,7 +66,7 @@ class WorkArea(
 
       val newEmployee = hireEmployee()
       partiallyBroadcastables = partiallyBroadcastables.addRoutee(newEmployee)
-    // println(s"$newEmployee hired (#employees = ${employeeCount})")
+      // println(s"$newEmployee hired (#employees = ${employeeCount})")
 
     case msg =>
       partialBroadcast(msg)
@@ -74,7 +75,7 @@ class WorkArea(
 
   private[this] def hireEmployee(): ActorRef = {
     val employeeProps = employeePropsFactory(self.taggedWith[WorkArea])
-    val employee = context.actorOf(employeeProps, s"employee$nextId")
+    val employee = context.actorOf(employeeProps, s"employee-$nextId")
 
     context.watch(employee)
     employeeCount += 1
