@@ -4,7 +4,7 @@ class MyScalatraController extends MagTpStack {
 
   get("/") {
     contentType="text/html"
-    jade("hello-scalate.jade")
+    jade("main.jade")
   }
 
 }

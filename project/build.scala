@@ -54,7 +54,8 @@ object MagtpBuild extends Build {
         // Style
         "org.webjars"                 % "bootstrap"            % "3.3.7-1",
         // Plots
-        "org.webjars"                 % "d3js"                 % "4.2.1"
+        "org.webjars.bower"           % "epoch"                % "0.8.4",
+        "org.webjars.bower"           % "d3"                   % "3.5.17"
       ),
       scalateTemplateConfig in Compile <<= (sourceDirectory in Compile) { base =>
         Seq(
