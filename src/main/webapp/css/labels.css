@@ -1,0 +1,18 @@
+.input-color {
+    margin: 2.5em;
+    position: relative;
+}
+
+.input-color input {
+    padding-left: 2.5em;
+}
+
+.input-color .color-box {
+    width: 1em;
+    height: 70%;
+    display: inline-block;
+    background-color: #ccc;
+    position: absolute;
+    left: 0.5em;
+    top: 15%;
+}

@@ -13,6 +13,7 @@ request.onOpen = function(response) {
 };
 request.onMessage = function(response) {
     // console.log('request.onMessage: ' + response.responseBody)
+    updatePieChartData(JSON.parse(response.responseBody))
     updateAreaChartData(JSON.parse(response.responseBody))
 };
 request.onClose = function(response) {

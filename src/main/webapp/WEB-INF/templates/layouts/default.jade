@@ -1,5 +1,4 @@
 -@ val title: String
--@ val headline: String = title
 -@ val body: String
 
 !!!
@@ -31,10 +30,11 @@ html
     - val bootstrapJs = uri(s"$bootstrapPath/js/bootstrap.min.js")
     script(type="text/javascript" src="#{bootstrapJs}")
 
+    script(type="text/javascript" src="js/pie.js")
     script(type="text/javascript" src="js/area.js")
     script(type="text/javascript" src="js/atmosphere.js")
+    link(href="css/labels.css" rel="stylesheet")
 
   body
     #content
-      h1= headline
       != body

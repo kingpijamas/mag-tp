@@ -38,7 +38,7 @@ class UIController(frontendActor: ActorRef @@ FrontendActor) extends ScalatraSer
         case JsonMessage(json) =>
           frontendActor ! Connection(uuid)
 
-        case msg =>
+        case msg => // log unhandled messages
           println(msg)
 
       }
