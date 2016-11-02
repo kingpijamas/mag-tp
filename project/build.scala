@@ -49,13 +49,13 @@ object MagtpBuild extends Build {
         // JSON
         "org.json4s"                  %% "json4s-jackson"      % "3.4.2",
         // Atmosphere client
+        "org.webjars"                 % "jquery"               % "1.11.1",
         "org.webjars"                 % "jquery-atmosphere"    % "2.2.13",
-        "org.webjars"                 % "jquery"               % "3.1.0",
         // Style
         "org.webjars"                 % "bootstrap"            % "3.3.7-1",
         // Plots
-        "org.webjars.bower"           % "epoch"                % "0.8.4",
-        "org.webjars.bower"           % "d3"                   % "3.5.17"
+        "org.webjars"                 % "d3js"                 % "3.4.13",
+        "org.webjars.bower"           % "epoch"                % "0.8.4"
       ),
       scalateTemplateConfig in Compile <<= (sourceDirectory in Compile) { base =>
         Seq(

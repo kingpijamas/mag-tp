@@ -16,8 +16,8 @@ trait FrontendModule {
     system.actorOf(Props(wire[FrontendActor]), "frontend").taggedWith[FrontendActor]
   }
 
-  val batchSize = 10
-  val workLoggerTimerFreq = 10 seconds
+  val batchSize = 10 // FIXME: ignored!
+  val workLoggerTimerFreq = 2 seconds
 
   def createWorkLogger(frontendActor: ActorRef): ActorRef @@ WorkLogger = {
     system.actorOf(Props(wire[WorkLogger]), "work-logger").taggedWith[WorkLogger]

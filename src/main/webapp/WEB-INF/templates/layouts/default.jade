@@ -6,15 +6,17 @@
 html
   head
     title= title
-    
-    - val jquery = uri("/webjars/jquery/3.1.0/jquery.min.js")
+    meta(charset="utf-8")
+
+    - val jquery = uri("/webjars/jquery/1.11.1/jquery.min.js")
     script(type="text/javascript" src="#{jquery}")
     
     - val jqueryAtmosphere = uri("/webjars/jquery-atmosphere/2.2.13/jquery.atmosphere-min.js")
     script(type="text/javascript" src="#{jqueryAtmosphere}")
 
     //- - val d3Path = uri("/webjars/d3js/4.2.1/d3.min.js")
-    - val d3Path = uri("/webjars/d3/3.5.17/d3.min.js")
+    - val d3Path = uri("/webjars/d3js/3.4.13/d3.min.js")
+    //- - val d3Path = uri("/webjars/d3/3.4.13/d3.min.js")
     script(type="text/javascript" src="#{d3Path}")
 
     - val epochPath = uri("/webjars/epoch/0.8.4/dist")

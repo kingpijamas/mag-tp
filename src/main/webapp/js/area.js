@@ -1,10 +1,26 @@
-var areaChartData = [
-  { label: 'Layer 1', values: [ {x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 2} ] },
-  { label: 'Layer 2', values: [ {x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 4} ] }
-];
+var areaChart = null;
+var ticks = 0;
 
-var areaChart = $('#areaChart').epoch({
-    type: 'area',
-    data: areaChartData,
-    axes: ['left', 'right', 'bottom']
-});
+var areaChartData = [
+    {label: 'Work', values: []},
+    {label: 'Loitering', values: []}
+];
+areaChartData[0].values.push({x: 0, y: 0})
+areaChartData[1].values.push({x: 0, y: 0})
+
+function updateAreaChartData(data) {
+    if (data.type == 'workLog') {
+        ticks++;
+        areaChartData[0].values.push({x: ticks, y: data.totalWork})
+        areaChartData[1].values.push({x: ticks, y: data.totalLoitering})
+        areaChart.update(areaChartData)
+    }
+}
+
+$(function(){
+    areaChart = $('#area-chart').epoch({
+        type: 'area',
+        data: areaChartData,
+        axes: ['left', 'right', 'bottom']
+    });
+})

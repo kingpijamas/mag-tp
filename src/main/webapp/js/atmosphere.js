@@ -7,22 +7,23 @@ var request = {
     fallbackTransport: 'long-polling'
 };
 request.onOpen = function(response) {
-    console.log('request.onOpen: ' + response.transport);
-    console.log(response);
+    // console.log('request.onOpen: ' + response.transport);
+    // console.log(response);
     subSocket.push(jQuery.stringifyJSON(json));
 };
 request.onMessage = function(response) {
-    console.log('request.onMessage: ' + response.responseBody)
+    // console.log('request.onMessage: ' + response.responseBody)
+    updateAreaChartData(JSON.parse(response.responseBody))
 };
 request.onClose = function(response) {
-    console.log('request.onClose');
+    // console.log('request.onClose');
 };
 request.onError = function(response) {
-    console.log('request.onError');
+    // console.log('request.onError');
 };
 
 var subSocket = socket.subscribe(request);
 
 var json = {
-    string: 'TestString'
+    string: ''
 };
