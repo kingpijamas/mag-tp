@@ -7,6 +7,7 @@ import org.mag.tp.domain.Employee.LoiterBehaviour
 import org.mag.tp.domain.Employee.WorkBehaviour
 import org.mag.tp.domain.WorkArea.Broadcastability
 import org.mag.tp.domain.WorkArea.EmployeeCount
+import org.mag.tp.domain.Employee._
 import org.mag.tp.util.ProbabilityBag
 
 import com.softwaremill.tagging.{ @@ => @@ }
@@ -16,20 +17,31 @@ import com.softwaremill.macwire.wireWith
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.actor.Props
+import scala.util.Random
 
 trait DomainModule {
-  val behaviours = ProbabilityBag.complete[Employee.Behaviour](
-    WorkBehaviour -> 0.75,
-    LoiterBehaviour -> 0.25)
+  val inertia = 10.taggedWith[Inertia]
+  val cyclicity = 1D.taggedWith[Cyclicity]
+  val permeability = 0.1D.taggedWith[Permeability]
+  val employeeTimerFreq = (0.25 seconds).taggedWith[Employee.TimerFreq]
 
-  val envy = 0.25
-  val targetEmployeeCount = 5.taggedWith[EmployeeCount]
+  val targetEmployeeCount = 100.taggedWith[EmployeeCount]
   val broadcastability = 5.taggedWith[Broadcastability]
-  val employeeTimerFreq = (0.5 seconds).taggedWith[Employee.TimerFreq]
+
   val employerTimerFreq = (employeeTimerFreq * 5).taggedWith[Employer.TimerFreq]
 
-  lazy val employeePropsFactory = (workArea: ActorRef @@ WorkArea) =>
+  def employeePropsFactory(workArea: ActorRef @@ WorkArea): Props @@ Employee = {
+    val (behaviour, cyclicity, permeability) = if (Random.nextDouble < 0.90)
+      (ProbabilityBag.complete[Employee.Behaviour](WorkBehaviour -> 1, LoiterBehaviour -> 0),
+        1D.taggedWith[Cyclicity],
+        0.001D.taggedWith[Permeability])
+    else
+      (ProbabilityBag.complete[Employee.Behaviour](WorkBehaviour -> 0, LoiterBehaviour -> 1),
+        1D.taggedWith[Cyclicity],
+        0.0001D.taggedWith[Permeability])
+
     wireWith(Employee.props _).taggedWith[Employee]
+  }
 
   lazy val employerPropsFactory = (workArea: ActorRef @@ WorkArea) =>
     wireWith(Employer.props _).taggedWith[Employer]

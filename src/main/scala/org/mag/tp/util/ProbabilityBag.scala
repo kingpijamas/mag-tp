@@ -60,13 +60,41 @@ object ProbabilityBag {
 }
 
 class ProbabilityBag[T](
-    entries: Iterable[ProbabilityBag.Entry[T]],
-    complete: Boolean) {
+  entries: Iterable[ProbabilityBag.Entry[T]],
+  complete: Boolean)
+    extends PartialFunction[T, Double] {
   import ProbabilityBag._
 
   def iterator: Iterator[T] = entries.iterator.map(_.value)
 
-  // TODO: there must be a better way to do this
+  def isDefinedAt(value: T): Boolean = probOf(value).isDefined  
+
+  def apply(value: T): Double = entries.find(_.value == value).get.prob
+
+  def probOf(value: T): Option[Double] =
+    entries.find(_.value == value).map(_.prob)
+
+  def update(value: T, prob: Double): ProbabilityBag[T] = {
+    if (probOf(value).isDefined)
+      transform {
+        case (v, _) if v == value => prob
+        case (_, prob)            => prob
+      }
+    else {
+      val newEntries = entries.map(_.valueAndProb).toBuffer += (value -> prob)
+      ProbabilityBag[T](newEntries, complete)
+    }
+  }
+
+  // FIXME: there must be a better way to do this
+  def transform(f: (T, Double) => Double): ProbabilityBag[T] = {
+    val newEntries = entries.map {
+      case Entry(_, value, prob) => (value, f(value, prob))
+    }
+    ProbabilityBag(newEntries, complete)
+  }
+
+  // FIXME: there must be a better way to do this
   def map[U](f: T => U): ProbabilityBag[U] = {
     val newEntries = entries.map {
       case Entry(_, value, prob) => (f(value), prob)
@@ -74,10 +102,12 @@ class ProbabilityBag[T](
     ProbabilityBag(newEntries, complete)
   }
 
-  def getRand: Option[T] = {
+  def nextValue: Option[T] = {
     val rand = Random.nextDouble
     entries.collectFirst {
       case Entry(accumProb, value, _) if accumProb > rand => value
     }
   }
+
+  override def toString: String = s"ProbabilityBag(\n${entries.map(_.valueAndProb)})"
 }
