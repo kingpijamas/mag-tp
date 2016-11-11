@@ -1,24 +1,21 @@
 package org.mag.tp
 
-import com.softwaremill.tagging._
 import org.json4s.DefaultFormats
 import org.json4s.Formats
-import org.scalatra.ScalatraServlet
+import org.mag.tp.ui.FrontendActor
+import org.mag.tp.ui.FrontendActor._
 import org.scalatra.SessionSupport
 import org.scalatra.atmosphere.AtmosphereClient
 import org.scalatra.atmosphere.AtmosphereSupport
 import org.scalatra.atmosphere.Connected
-import org.scalatra.atmosphere.Disconnected
-import org.scalatra.atmosphere.Error
 import org.scalatra.atmosphere.JsonMessage
-import org.scalatra.atmosphere.TextMessage
 import org.scalatra.json.JValueResult
 import org.scalatra.json.JacksonJsonSupport
 
+import com.softwaremill.tagging.{ @@ => @@ }
+
 import akka.actor.ActorRef
 import akka.actor.actorRef2Scala
-import org.mag.tp.ui.FrontendActor
-import org.mag.tp.ui.FrontendActor._
 
 class UIController(frontendActor: ActorRef @@ FrontendActor) extends MagTpStack
     with JValueResult
@@ -33,7 +30,11 @@ class UIController(frontendActor: ActorRef @@ FrontendActor) extends MagTpStack
     jade("main.jade")
   }
 
-  atmosphere("/ui/") {
+  post("/restart") {
+    frontendActor ! StartSimulation
+  }
+
+  atmosphere("/ui") {
     new AtmosphereClient {
       def receive = {
         case Connected => // ignore

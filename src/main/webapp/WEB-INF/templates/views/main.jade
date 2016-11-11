@@ -1,6 +1,9 @@
 - attributes("title") = "TP Multiagentes"
 
 .container
+  .row.col-md-12
+    button#restart-btn.btn.btn-primary(type="submit") Iniciar
+
   .row
     .col-md-4
       h4 Trabajo vs holgazanería (tiempo real)
@@ -9,15 +12,15 @@
     .col-md-8
       h4 Trabajo vs holgazanería en el tiempo
       .row
-        div(id="area-chart" class="epoch" style="width: 800px; height: 200px")
+        div#area-chart(class="epoch" style="width: 800px; height: 200px")
       .row
         .col-md-2.col-md-offset-4
           .input-color
             //- FIXME
-            input(type="text" value="Work")
+            span(type="text" value="Work")
             div(class="color-box" style="background-color: navy;")
         .col-md-2
           .input-color
             //- FIXME
-            input(type="text" value="Loitering")
+            span(type="text" value="Loitering")
             div(class="color-box" style="background-color: #FF850A;")

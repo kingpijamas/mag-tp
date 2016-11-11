@@ -23,7 +23,7 @@ trait MagTpStack extends ScalatraServlet with ScalateSupport {
         contentType = servletContext.getMimeType(resourcePath)
         IOUtil.loadBytes(inputStream)
       }
-      case None => resourceNotFound()
+      case _ => resourceNotFound()
     }
   }
 }

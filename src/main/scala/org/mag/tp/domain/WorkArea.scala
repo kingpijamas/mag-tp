@@ -1,14 +1,12 @@
 package org.mag.tp.domain
 
-import scala.concurrent.duration.FiniteDuration
-
-import org.mag.tp.util.ProbabilityBag
+import org.mag.tp.util.MandatoryBroadcastingActor
+import org.mag.tp.util.PartiallyBroadcastingActor
 
 import com.softwaremill.macwire.wire
 import com.softwaremill.tagging.{ @@ => @@ }
 import com.softwaremill.tagging.Tagger
 
-import Employee.Behaviour
 import WorkArea.Broadcastability
 import WorkArea.EmployeeCount
 import akka.actor.Actor
@@ -18,8 +16,6 @@ import akka.actor.Terminated
 import akka.routing.ActorRefRoutee
 import akka.routing.RandomRoutingLogic
 import akka.routing.Router
-import org.mag.tp.util.PartiallyBroadcastingActor
-import org.mag.tp.util.MandatoryBroadcastingActor
 
 object WorkArea {
   // messages
@@ -47,8 +43,10 @@ class WorkArea(
   val baseMandatoryBroadcastables: Traversable[ActorRef])
     extends Actor with PartiallyBroadcastingActor with MandatoryBroadcastingActor {
 
+  println(s"$self: alive and well!")
+
   // FIXME: consider crashes!
-  val employer = context.actorOf(employerPropsFactory(self.taggedWith[WorkArea]), "employer")  
+  val employer = context.actorOf(employerPropsFactory(self.taggedWith[WorkArea]), "employer")
   val mandatoryBroadcastables = baseMandatoryBroadcastables ++ Seq(employer)
 
   var nextId = 0

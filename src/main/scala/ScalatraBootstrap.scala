@@ -11,7 +11,6 @@ class ScalatraBootstrap extends LifeCycle with ControllersModule with DomainModu
   val frontendActor = createFrontendActor()
   val workLogger = createWorkLogger(frontendActor)
   val loggers = Seq(workLogger)
-  val workArea = createWorkArea()
 
   override def init(context: ServletContext): Unit = {
     context.mount(uiController, "/*")

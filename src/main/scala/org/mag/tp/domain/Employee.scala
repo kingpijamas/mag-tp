@@ -68,6 +68,8 @@ class Employee(
   import Employee._
   import WorkArea._
 
+  println(s"$self: alive and well!")
+
   def timerMessage: Any = Act
   def randomBehaviourTrigger: Any = Act
 

@@ -4,12 +4,18 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonDSL._
 import org.atmosphere.cpr.AtmosphereResourceFactory
+import com.softwaremill.tagging._
 
 import akka.actor.Actor
 import scala.collection.mutable
+import akka.actor.Props
+import org.mag.tp.domain.WorkArea
+import akka.actor.ActorRef
+import akka.actor.Kill
 
 object FrontendActor {
   case class Connection(clientUuid: String)
+  case object StartSimulation
 
   case class WorkLog(totalWork: Int, totalLoitering: Int) {
     override def toString: String =
@@ -17,15 +23,22 @@ object FrontendActor {
   }
 }
 
-class FrontendActor extends Actor {
+class FrontendActor(workAreaPropsFactory: (() => Props @@ WorkArea)) extends Actor {
   import FrontendActor._
 
   var connectedClientUuids = mutable.Buffer[String]()
+  var workArea: Option[ActorRef] = None
+  var restartCount = 0
 
   def receive: Receive = {
     case Connection(clientUuid: String) =>
       connectedClientUuids += clientUuid
       println(s"connected clients: $connectedClientUuids")
+
+    case StartSimulation =>
+      workArea.foreach(context.stop(_))
+      workArea = Some(context.actorOf(workAreaPropsFactory(), s"work-area-$restartCount"))
+      restartCount +=1
 
     case msg: WorkLog =>
       val marshalledMsg = marshall(msg)

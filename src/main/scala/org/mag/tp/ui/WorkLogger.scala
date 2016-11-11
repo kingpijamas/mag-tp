@@ -15,6 +15,7 @@ import akka.actor.ActorRef
 import akka.actor.Props
 
 object WorkLogger {
+  case object ToggleLogging
   case object FlushLogSummary
 
   def props(batchSize: Int,
@@ -31,12 +32,20 @@ class WorkLogger(
   import FrontendActor._
   import WorkLogger._
   import WorkArea._
+  import context._
 
   def timerMessage: Any = FlushLogSummary
 
   val actionsByActor = mutable.Map[ActorRef, mutable.Buffer[WorkArea.Actions]]()
 
   def receive: Receive = {
+    case ToggleLogging => become(loggingEnabled)
+    case _             => // ignore messages until logging is toggled
+  }
+  
+  def loggingEnabled: Receive = {
+    case ToggleLogging => unbecome()
+
     case action: WorkArea.Actions =>
       val knownActions = actionsByActor.getOrElse(sender, mutable.Buffer())
       knownActions += action

@@ -3,6 +3,8 @@ package org.mag.tp.ui
 import scala.concurrent.duration.DurationDouble
 import scala.language.postfixOps
 
+import org.mag.tp.domain.DomainModule
+
 import com.softwaremill.macwire.wire
 import com.softwaremill.tagging.{ @@ => @@ }
 import com.softwaremill.tagging.Tagger
@@ -11,8 +13,9 @@ import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.actor.Props
 
-trait FrontendModule {
+trait FrontendModule extends DomainModule {
   def createFrontendActor(): ActorRef @@ FrontendActor = {
+    val workAreaProps = workAreaPropsFactory _
     system.actorOf(Props(wire[FrontendActor]), "frontend").taggedWith[FrontendActor]
   }
 
