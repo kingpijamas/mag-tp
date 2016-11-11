@@ -39,7 +39,9 @@ object Employee {
   trait Permeability
 
   case class StatusPerception(totalEarnings: Double = 0D, totalWork: Int = 0, totalLoitering: Int = 0) {
-    def isLazy: Boolean = totalWork > totalLoitering
+    def isWorking: Boolean = totalWork > totalLoitering
+    
+    def isLazy: Boolean = totalWork < totalLoitering
 
     override def toString: String =
       s"StatusPerception(totalEarnings=$totalEarnings, totalWork=$totalWork, totalLoitering=$totalLoitering)"
@@ -86,8 +88,8 @@ class Employee(
   }
 
   private[this] def updateBehaviours(baseBehaviours: ProbabilityBag[Employee.Behaviour]) = {
-    val workingCount = perceptionsByEmployee.values.count(_.isLazy)
-    val workingProportion = workingCount / knownEmployees.size
+    val workingCount: Double = perceptionsByEmployee.values.count(_.isWorking)
+    val workingProportion = workingCount / knownEmployees.size.toDouble
     val (majorityBehaviour, majorityProportion) = if (workingProportion >= 0.5)
       (WorkBehaviour, workingProportion)
     else
@@ -97,6 +99,8 @@ class Employee(
       majorityBehaviour
     else
       majorityBehaviour.opposite
+      
+    // println(s"($preferredBehaviour) = ${baseBehaviours(preferredBehaviour)} + $permeability * $majorityProportion = ${baseBehaviours(preferredBehaviour) + permeability * majorityProportion}")
 
     val proposedPreferredBehaviourProb =
       baseBehaviours(preferredBehaviour) + permeability * majorityProportion

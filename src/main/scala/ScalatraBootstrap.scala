@@ -14,8 +14,7 @@ class ScalatraBootstrap extends LifeCycle with ControllersModule with DomainModu
   val workArea = createWorkArea()
 
   override def init(context: ServletContext): Unit = {
-    context.mount(scalatraController, "/*")
-    context.mount(uiController, "/ui")
+    context.mount(uiController, "/*")
   }
 
   override def destroy(context: ServletContext): Unit = {

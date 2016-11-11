@@ -20,7 +20,7 @@ import akka.actor.actorRef2Scala
 import org.mag.tp.ui.FrontendActor
 import org.mag.tp.ui.FrontendActor._
 
-class UIController(frontendActor: ActorRef @@ FrontendActor) extends ScalatraServlet
+class UIController(frontendActor: ActorRef @@ FrontendActor) extends MagTpStack
     with JValueResult
     with JacksonJsonSupport
     with SessionSupport
@@ -28,7 +28,12 @@ class UIController(frontendActor: ActorRef @@ FrontendActor) extends ScalatraSer
 
   implicit protected val jsonFormats: Formats = DefaultFormats
 
-  atmosphere("/") {
+  get("/") {
+    contentType="text/html"
+    jade("main.jade")
+  }
+
+  atmosphere("/ui/") {
     new AtmosphereClient {
       def receive = {
         case Connected => // ignore
