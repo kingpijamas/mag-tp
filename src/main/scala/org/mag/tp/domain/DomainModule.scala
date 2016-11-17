@@ -17,7 +17,7 @@ trait DomainModule {
   val permeability = 0.1D.taggedWith[Permeability]
   val employeeTimerFreq = (0.1 seconds).taggedWith[Employee.TimerFreq]
 
-  val targetEmployeeCount = 5.taggedWith[EmployeeCount]
+  val targetEmployeeCount = 200.taggedWith[EmployeeCount]
   val broadcastability = 5.taggedWith[Broadcastability]
 
   val employerTimerFreq = (employeeTimerFreq * 5).taggedWith[Employer.TimerFreq]
@@ -25,8 +25,8 @@ trait DomainModule {
   def employeePropsFactory(workArea: ActorRef @@ WorkArea): Props @@ Employee = {
     val (behaviour, cyclicity, permeability) = if (Random.nextDouble < 0.4)
       (ProbabilityBag.complete[Employee.Behaviour](WorkBehaviour -> 0, LoiterBehaviour -> 1),
-        1D.taggedWith[Cyclicity],
-        0.05D.taggedWith[Permeability])
+        -1D.taggedWith[Cyclicity],
+        0.01D.taggedWith[Permeability])
     else
       (ProbabilityBag.complete[Employee.Behaviour](WorkBehaviour -> 1, LoiterBehaviour -> 0),
         1D.taggedWith[Cyclicity],

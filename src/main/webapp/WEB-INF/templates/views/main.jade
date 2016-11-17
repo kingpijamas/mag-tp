@@ -7,20 +7,23 @@
   .row
     .col-md-4
       h4 Trabajo vs holgazanería (tiempo real)
-      div(id="pie-chart" class="epoch" style="width: 200px; height: 200px")
+      div#pie-chart.epoch(style="width: 200px; height: 200px")
 
     .col-md-8
       h4 Trabajo vs holgazanería en el tiempo
       .row
-        div#area-chart(class="epoch" style="width: 800px; height: 200px")
+        div#area-chart.epoch(style="width: 800px; height: 200px")
       .row
         .col-md-2.col-md-offset-4
           .input-color
             //- FIXME
             span(type="text" value="Work")
-            div(class="color-box" style="background-color: navy;")
+            div.color-box(style="background-color: navy;")
         .col-md-2
           .input-color
             //- FIXME
             span(type="text" value="Loitering")
-            div(class="color-box" style="background-color: #FF850A;")
+            div.color-box(style="background-color: #FF850A;")
+
+      .row
+        div#line-chart.epoch(style="width: 800px; height: 200px")

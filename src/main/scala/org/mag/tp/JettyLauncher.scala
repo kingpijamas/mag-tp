@@ -5,8 +5,8 @@ import org.eclipse.jetty.servlet.DefaultServlet
 import org.eclipse.jetty.webapp.WebAppContext
 import org.scalatra.servlet.ScalatraListener
 
-object JettyLauncher extends App { // this is my entry object as specified in sbt project definition
-  val port = Option(System.getenv("PORT")).map(_.toInt).getOrElse(8080)
+object JettyLauncher extends App {
+  val port = Option(System.getenv("PORT")) map(_.toInt) getOrElse(8080)
 
   val server = new Server(port)
   val context = new WebAppContext()

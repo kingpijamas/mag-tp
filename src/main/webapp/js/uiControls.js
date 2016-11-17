@@ -1,6 +1,6 @@
-$(function() {
-    $('#restart-btn').click(function() {
+$(function () {
+    $('#restart-btn').click(function () {
         console.log('Restarting...');
-        $.post("/restart");
+        $.post('/restart');
     });
-})
+});

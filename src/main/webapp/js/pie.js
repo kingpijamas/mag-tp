@@ -7,17 +7,17 @@ var pieChartData = [
 
 function updatePieChartData(data) {
     if (data.type == 'workLog') {
-        var totalTime = data.totalWork + data.totalLoitering
-        var workedTimePct = (data.totalWork / totalTime) * 100
-        pieChartData[0].value = workedTimePct
-        pieChartData[1].value = 100 - workedTimePct
-        pieChart.update(pieChartData)
+        var totalTime = data.workStats.sum + data.loiteringStats.sum;
+        var workedTimePct = (data.workStats.sum / totalTime) * 100;
+        pieChartData[0].value = workedTimePct;
+        pieChartData[1].value = 100 - workedTimePct;
+        pieChart.update(pieChartData);
     }
 }
 
-$(function(){
+$(function () {
     pieChart = $('#pie-chart').epoch({
         type: 'pie',
         data: pieChartData
     });
-})
+});

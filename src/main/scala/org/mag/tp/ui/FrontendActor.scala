@@ -17,13 +17,14 @@ object FrontendActor {
   // FIXME: these two shouldn't be necessary!
   implicit def fullStatsFormatter: JsonFormat[ActionStats] = jsonFormat7(FullStats.apply[Int])
 
-  implicit val workLogFormatter = jsonFormat2(WorkLog)
+  implicit val workLogFormatter = jsonFormat3(WorkLog)
 
   case class Connection(clientUuid: String)
 
   // messages
   case object StartSimulation
-  case class WorkLog(workStats: ActionStats, loiteringStats: ActionStats)
+  // FIXME: type won't be necessary once json-shapeless comes into action
+  case class WorkLog(workStats: ActionStats, loiteringStats: ActionStats, `type`: String = "workLog")
 }
 
 class FrontendActor(workAreaPropsFactory: (Traversable[ActorRef] => Props @@ WorkArea),
@@ -32,7 +33,7 @@ class FrontendActor(workAreaPropsFactory: (Traversable[ActorRef] => Props @@ Wor
   import FrontendActor._
 
   var connectedClientUuids = mutable.Buffer[String]()
-  var workArea: Option[ActorRef] = None
+  var workArea = Option.empty[ActorRef]
   var workLoggers = Seq[ActorRef]()
   var restartCount = 0
 
