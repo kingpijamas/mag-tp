@@ -6,6 +6,7 @@ import com.earldouglas.xwp.JettyPlugin
 import com.mojolly.scalate.ScalatePlugin._
 import ScalateKeys._
 
+
 object MagtpBuild extends Build {
   val Organization = "org.mag"
   val Name = "MAG-TP"
@@ -27,35 +28,37 @@ object MagtpBuild extends Build {
       resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases",
       libraryDependencies ++= Seq(
         // Actors
-        "com.typesafe.akka"           %% "akka-actor"          % "2.4.10",
+        "com.typesafe.akka"           %% "akka-actor"           % "2.4.10",
         // DI
-        "com.softwaremill.macwire"    %% "macros"              % MacwireVersion,
-        "com.softwaremill.macwire"    %% "util"                % MacwireVersion,
-        "com.softwaremill.macwire"    %% "proxy"               % MacwireVersion,
+        "com.softwaremill.macwire"    %% "macros"               % MacwireVersion,
+        "com.softwaremill.macwire"    %% "util"                 % MacwireVersion,
+        "com.softwaremill.macwire"    %% "proxy"                % MacwireVersion,
         // math & statistics
-        "org.scalanlp"                %% "breeze"              % "0.12",
+        "org.scalanlp"                %% "breeze"               % "0.12",
         // Web
-        "org.scalatra"                %% "scalatra"            % ScalatraVersion,
-        "org.scalatra"                %% "scalatra-scalate"    % ScalatraVersion,
-        "org.scalatra"                %% "scalatra-atmosphere" % ScalatraVersion,
+        "org.scalatra"                %% "scalatra"             % ScalatraVersion,
+        "org.scalatra"                %% "scalatra-scalate"     % ScalatraVersion,
+        "org.scalatra"                %% "scalatra-atmosphere"  % ScalatraVersion,
         // "org.scalatra" %% "scalatra-specs2" % ScalatraVersion % "test",
-        "org.eclipse.jetty"           % "jetty-plus"           % JettyVersion     % "compile;provided",
-        "org.eclipse.jetty"           % "jetty-webapp"         % JettyVersion     % "compile",
-        "org.eclipse.jetty.websocket" % "websocket-server"     % JettyVersion     % "compile;provided",
+        "org.eclipse.jetty"           % "jetty-plus"            % JettyVersion     % "compile;provided",
+        "org.eclipse.jetty"           % "jetty-webapp"          % JettyVersion     % "compile",
+        "org.eclipse.jetty.websocket" % "websocket-server"      % JettyVersion     % "compile;provided",
         // "org.eclipse.jetty" % "jetty-server" % JettyVersion,
-        "javax.servlet"               % "javax.servlet-api"    % "3.1.0"          % "compile;provided;test",
+        "javax.servlet"               % "javax.servlet-api"     % "3.1.0"          % "compile;provided;test",
         // Logging
-        "ch.qos.logback"              % "logback-classic"      % "1.1.5"          % "runtime",
+        "ch.qos.logback"              % "logback-classic"       % "1.1.5"          % "runtime",
         // JSON
-        "org.json4s"                  %% "json4s-jackson"      % "3.4.2",
+        "org.json4s"                  %% "json4s-jackson"       % "3.4.2",
+        "io.spray"                    %% "spray-json"           % "1.3.2",
+        "com.github.fommil"           %% "spray-json-shapeless" % "1.3.0",
         // Atmosphere client
-        "org.webjars"                 % "jquery"               % "1.11.1",
-        "org.webjars"                 % "jquery-atmosphere"    % "2.2.13",
+        "org.webjars"                 % "jquery"                % "1.11.1",
+        "org.webjars"                 % "jquery-atmosphere"     % "2.2.13",
         // Style
-        "org.webjars"                 % "bootstrap"            % "3.3.7-1",
+        "org.webjars"                 % "bootstrap"             % "3.3.7-1",
         // Plots
-        "org.webjars"                 % "d3js"                 % "3.4.13",
-        "org.webjars.bower"           % "epoch"                % "0.8.4"
+        "org.webjars"                 % "d3js"                  % "3.4.13",
+        "org.webjars.bower"           % "epoch"                 % "0.8.4"
       ),
       scalateTemplateConfig in Compile <<= (sourceDirectory in Compile) { base =>
         Seq(

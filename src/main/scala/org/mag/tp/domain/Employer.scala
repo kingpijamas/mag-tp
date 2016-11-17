@@ -1,31 +1,21 @@
 package org.mag.tp.domain
 
-import scala.collection.mutable
-import scala.concurrent.duration.FiniteDuration
-
+import akka.actor.{ Actor, ActorRef, Props, actorRef2Scala }
+import com.softwaremill.macwire.wire
+import com.softwaremill.tagging.@@
 import org.mag.tp.util.Scheduled
 
-import com.softwaremill.macwire.wire
-import com.softwaremill.tagging.{ @@ => @@ }
-
-import akka.actor.Actor
-import akka.actor.ActorRef
-import akka.actor.Props
-import akka.actor.actorRef2Scala
+import scala.collection.mutable
+import scala.concurrent.duration.FiniteDuration
 
 object Employer {
   case object PaySalaries
 
   trait TimerFreq
-
-  def props(timerFreq: FiniteDuration @@ TimerFreq,
-            workArea: ActorRef @@ WorkArea): Props =
-    Props(wire[Employer])
 }
 
-class Employer(
-  val timerFreq: FiniteDuration,
-  val workArea: ActorRef)
+class Employer(val timerFreq: FiniteDuration @@ Employer.TimerFreq,
+               val workArea: ActorRef @@ WorkArea)
     extends Actor with Scheduled {
   import Employee._
   import Employer._

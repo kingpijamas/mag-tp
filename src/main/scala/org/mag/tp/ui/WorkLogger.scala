@@ -1,37 +1,26 @@
 package org.mag.tp.ui
 
-import scala.annotation.migration
+import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
+import com.softwaremill.macwire.wire
+import com.softwaremill.tagging.@@
+import org.mag.tp.domain.WorkArea
+import org.mag.tp.util.{Scheduled, Stats}
+
 import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
-
-import org.mag.tp.domain.WorkArea
-import org.mag.tp.util.Scheduled
-
-import com.softwaremill.macwire.wire
-import com.softwaremill.tagging.{ @@ => @@ }
-
-import akka.actor.Actor
-import akka.actor.ActorRef
-import akka.actor.Props
 
 object WorkLogger {
   case object ToggleLogging
   case object FlushLogSummary
-
-  def props(batchSize: Int,
-            timerFreq: FiniteDuration,
-            frontend: ActorRef @@ FrontendActor): Props =
-    Props(wire[WorkLogger])
 }
 
-class WorkLogger(
-  val batchSize: Int,
-  val timerFreq: FiniteDuration,
-  val frontend: ActorRef)
-    extends Actor with Scheduled {
+class WorkLogger(val batchSize: Int,
+                 val timerFreq: FiniteDuration,
+                 val frontend: ActorRef @@ FrontendActor)
+  extends Actor with Scheduled {
   import FrontendActor._
-  import WorkLogger._
   import WorkArea._
+  import WorkLogger._
   import context._
 
   def timerMessage: Any = FlushLogSummary
@@ -40,9 +29,9 @@ class WorkLogger(
 
   def receive: Receive = {
     case ToggleLogging => become(loggingEnabled)
-    case _             => // ignore messages until logging is toggled
+    case _ => // ignore messages until logging is toggled
   }
-  
+
   def loggingEnabled: Receive = {
     case ToggleLogging => unbecome()
 
@@ -52,13 +41,16 @@ class WorkLogger(
       actionsByActor(sender) = knownActions
 
     case FlushLogSummary =>
-      val allActions = actionsByActor.values.flatten
-      val totalWork = allActions.count { _ == Work }
-      val totalLoitering = allActions.count { _ == Loiter }
-      println(s"${self.path}: ${WorkLog(totalWork, totalLoitering)}")
+      val workStats = statsFor(Work)
+      val loiteringStats = statsFor(Loiter)
       actionsByActor.clear()
-      frontend ! WorkLog(totalWork, totalLoitering)
+      frontend ! WorkLog(workStats, loiteringStats)
 
     case _ => // ignore unknown messages
+  }
+
+  private[this] def statsFor(action: Actions): ActionStats = {
+    val actions = actionsByActor.values
+    Stats.full(actions map (_ count (_ == action)))
   }
 }

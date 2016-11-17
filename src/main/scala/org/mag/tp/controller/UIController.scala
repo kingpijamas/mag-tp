@@ -1,21 +1,16 @@
-package org.mag.tp
+package org.mag.tp.controller
 
-import org.json4s.DefaultFormats
-import org.json4s.Formats
+import akka.actor._
+import akka.actor.Actor
+import akka.actor.Actor._
+import com.softwaremill.tagging.@@
+import org.json4s.{DefaultFormats, Formats}
+import org.mag.tp.MagTpStack
 import org.mag.tp.ui.FrontendActor
 import org.mag.tp.ui.FrontendActor._
 import org.scalatra.SessionSupport
-import org.scalatra.atmosphere.AtmosphereClient
-import org.scalatra.atmosphere.AtmosphereSupport
-import org.scalatra.atmosphere.Connected
-import org.scalatra.atmosphere.JsonMessage
-import org.scalatra.json.JValueResult
-import org.scalatra.json.JacksonJsonSupport
-
-import com.softwaremill.tagging.{ @@ => @@ }
-
-import akka.actor.ActorRef
-import akka.actor.actorRef2Scala
+import org.scalatra.atmosphere.{AtmosphereClient, AtmosphereSupport, Connected, JsonMessage}
+import org.scalatra.json.{JValueResult, JacksonJsonSupport}
 
 class UIController(frontendActor: ActorRef @@ FrontendActor) extends MagTpStack
     with JValueResult
@@ -36,7 +31,7 @@ class UIController(frontendActor: ActorRef @@ FrontendActor) extends MagTpStack
 
   atmosphere("/ui") {
     new AtmosphereClient {
-      def receive = {
+      def receive: Receive = {
         case Connected => // ignore
         // case Disconnected(disconnector, Some(error)) =>
         // case Error(Some(error))                      =>
@@ -44,9 +39,8 @@ class UIController(frontendActor: ActorRef @@ FrontendActor) extends MagTpStack
         case JsonMessage(json) =>
           frontendActor ! Connection(uuid)
 
-        case msg => // log unhandled messages
+        case msg: Any => // log unhandled messages
           println(msg)
-
       }
     }
   }

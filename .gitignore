@@ -13,6 +13,9 @@ logs/*
 .scala_dependencies
 .worksheet
 
+# idea specific
+.idea
+
 # Scalastyle specific
 .scalastyle
 /bin/

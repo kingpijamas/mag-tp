@@ -1,8 +1,6 @@
 package org.mag.tp.util
 
-import akka.routing.Router
-import akka.actor.Actor
-import akka.actor.ActorRef
+import akka.actor.{Actor, ActorRef}
 
 trait MandatoryBroadcastingActor extends Actor {
   def mandatoryBroadcastables: Traversable[ActorRef]

@@ -1,7 +1,7 @@
 package org.mag.tp.util
 
-import akka.routing.Router
 import akka.actor.Actor
+import akka.routing.Router
 
 trait PartiallyBroadcastingActor extends Actor {
   def broadcastability: Int

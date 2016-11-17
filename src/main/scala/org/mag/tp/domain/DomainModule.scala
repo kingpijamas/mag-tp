@@ -1,25 +1,15 @@
 package org.mag.tp.domain
 
+import akka.actor.{ActorRef, ActorSystem, Props}
+import com.softwaremill.macwire.wire
+import com.softwaremill.tagging.{@@, Tagger}
+import org.mag.tp.domain.Employee._
+import org.mag.tp.domain.WorkArea.{Broadcastability, EmployeeCount}
+import org.mag.tp.util.ProbabilityBag
+
 import scala.concurrent.duration.DurationDouble
 import scala.language.postfixOps
 import scala.util.Random
-
-import org.mag.tp.domain.Employee.Cyclicity
-import org.mag.tp.domain.Employee.Inertia
-import org.mag.tp.domain.Employee.LoiterBehaviour
-import org.mag.tp.domain.Employee.Permeability
-import org.mag.tp.domain.Employee.WorkBehaviour
-import org.mag.tp.domain.WorkArea.Broadcastability
-import org.mag.tp.domain.WorkArea.EmployeeCount
-import org.mag.tp.util.ProbabilityBag
-
-import com.softwaremill.macwire.wireWith
-import com.softwaremill.tagging.{ @@ => @@ }
-import com.softwaremill.tagging.Tagger
-
-import akka.actor.ActorRef
-import akka.actor.ActorSystem
-import akka.actor.Props
 
 trait DomainModule {
   val inertia = 10.taggedWith[Inertia]
@@ -42,18 +32,17 @@ trait DomainModule {
         1D.taggedWith[Cyclicity],
         0.05D.taggedWith[Permeability])
 
-    wireWith(Employee.props _).taggedWith[Employee]
+    Props(wire[Employee]).taggedWith[Employee]
   }
 
   def employerPropsFactory(workArea: ActorRef @@ WorkArea): Props @@ Employer =
-    wireWith(Employer.props _).taggedWith[Employer]
+    Props(wire[Employer]).taggedWith[Employer]
 
-  lazy val workAreaPropsFactory = () => {
+  def workAreaPropsFactory(mandatoryBroadcastables: Traversable[ActorRef]): Props @@ WorkArea = {
     val employeeProps = employeePropsFactory _
     val employerProps = employerPropsFactory _
-    wireWith(WorkArea.props _).taggedWith[WorkArea]
+    Props(wire[WorkArea]).taggedWith[WorkArea]
   }
 
   def system: ActorSystem
-  def loggers: Traversable[ActorRef]
 }

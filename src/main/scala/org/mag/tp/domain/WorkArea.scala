@@ -1,21 +1,11 @@
 package org.mag.tp.domain
 
-import org.mag.tp.util.MandatoryBroadcastingActor
-import org.mag.tp.util.PartiallyBroadcastingActor
-
+import akka.actor.{Actor, ActorRef, Props, Terminated}
+import akka.routing.{ActorRefRoutee, RandomRoutingLogic, Router}
 import com.softwaremill.macwire.wire
-import com.softwaremill.tagging.{ @@ => @@ }
-import com.softwaremill.tagging.Tagger
-
-import WorkArea.Broadcastability
-import WorkArea.EmployeeCount
-import akka.actor.Actor
-import akka.actor.ActorRef
-import akka.actor.Props
-import akka.actor.Terminated
-import akka.routing.ActorRefRoutee
-import akka.routing.RandomRoutingLogic
-import akka.routing.Router
+import com.softwaremill.tagging.{@@, Tagger}
+import org.mag.tp.domain.WorkArea.{Broadcastability, EmployeeCount}
+import org.mag.tp.util.{MandatoryBroadcastingActor, PartiallyBroadcastingActor}
 
 object WorkArea {
   // messages
@@ -26,25 +16,16 @@ object WorkArea {
   // type annotations
   trait EmployeeCount
   trait Broadcastability
-
-  def props(targetEmployeeCount: Int @@ EmployeeCount,
-            broadcastability: Int @@ Broadcastability,
-            employeePropsFactory: (ActorRef @@ WorkArea => Props @@ Employee),
-            employerPropsFactory: (ActorRef @@ WorkArea => Props @@ Employer),
-            mandatoryBroadcastables: Traversable[ActorRef]): Props =
-    Props(wire[WorkArea])
 }
 
-class WorkArea(
-  val targetEmployeeCount: Int @@ EmployeeCount,
-  val broadcastability: Int @@ Broadcastability,
-  val employeePropsFactory: (ActorRef @@ WorkArea => Props @@ Employee),
-  val employerPropsFactory: (ActorRef @@ WorkArea => Props @@ Employer),
-  val baseMandatoryBroadcastables: Traversable[ActorRef])
-    extends Actor with PartiallyBroadcastingActor with MandatoryBroadcastingActor {
+class WorkArea(val targetEmployeeCount: Int @@ EmployeeCount,
+               val broadcastability: Int @@ Broadcastability,
+               val employeePropsFactory: (ActorRef @@ WorkArea => Props @@ Employee),
+               val employerPropsFactory: (ActorRef @@ WorkArea => Props @@ Employer),
+               val baseMandatoryBroadcastables: Traversable[ActorRef])
+  extends Actor with PartiallyBroadcastingActor with MandatoryBroadcastingActor {
 
-  println(s"$self: alive and well!")
-
+  println(s"$self: alive and well!\n  $baseMandatoryBroadcastables")
   // FIXME: consider crashes!
   val employer = context.actorOf(employerPropsFactory(self.taggedWith[WorkArea]), "employer")
   val mandatoryBroadcastables = baseMandatoryBroadcastables ++ Seq(employer)
@@ -56,7 +37,7 @@ class WorkArea(
     Router(RandomRoutingLogic(), employees)
   }
 
-  def receive = {
+  def receive: Receive = {
     case Terminated(employee) =>
       // println(s"$employee fired (#employees = ${employees.size})")
       partiallyBroadcastables = partiallyBroadcastables.removeRoutee(employee)
@@ -64,9 +45,9 @@ class WorkArea(
 
       val newEmployee = hireEmployee()
       partiallyBroadcastables = partiallyBroadcastables.addRoutee(newEmployee)
-      // println(s"$newEmployee hired (#employees = ${employeeCount})")
+    // println(s"$newEmployee hired (#employees = ${employeeCount})")
 
-    case msg =>
+    case msg: Any =>
       partialBroadcast(msg)
       mandatoryBroadcast(msg)
   }

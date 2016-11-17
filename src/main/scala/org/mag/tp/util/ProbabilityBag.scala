@@ -1,14 +1,9 @@
 package org.mag.tp.util
 
+import breeze.linalg.{DenseVector, accumulate}
+
 import scala.reflect.ClassTag
 import scala.util.Random
-
-import breeze.linalg.DenseVector
-import breeze.linalg.accumulate
-import scala.collection.immutable
-import scala.collection.generic.CanBuildFrom
-import scala.collection.TraversableLike
-import scala.collection.SetLike
 
 object ProbabilityBag {
   case class Entry[T](accumProb: Double, value: T, prob: Double) {
