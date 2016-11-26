@@ -1,7 +1,6 @@
 package org.mag.tp.ui
 
-import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
-import com.softwaremill.macwire.wire
+import akka.actor.{Actor, ActorRef, actorRef2Scala}
 import com.softwaremill.tagging.@@
 import org.mag.tp.domain.WorkArea
 import org.mag.tp.util.{Scheduled, Stats}

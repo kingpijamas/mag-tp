@@ -7,7 +7,6 @@ import org.mag.tp.domain.DomainModule
 
 import scala.concurrent.duration.DurationDouble
 import scala.language.postfixOps
-import org.mag.tp.domain.WorkArea
 
 trait FrontendModule extends DomainModule {
   def workLoggerPropsFactory(frontendActor: ActorRef @@ FrontendActor): Props @@ WorkLogger =

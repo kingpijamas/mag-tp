@@ -4,12 +4,12 @@ import akka.actor.{Actor, ActorRef, Props}
 import com.softwaremill.tagging._
 import org.atmosphere.cpr.AtmosphereResourceFactory
 import org.mag.tp.domain.WorkArea
+import org.mag.tp.ui.WorkLogger.ToggleLogging
 import org.mag.tp.util.Stats.FullStats
+import spray.json.DefaultJsonProtocol._
 import spray.json._
-import DefaultJsonProtocol._
 
 import scala.collection.mutable
-import org.mag.tp.ui.WorkLogger.ToggleLogging
 
 object FrontendActor {
   type ActionStats = FullStats[Int]
@@ -51,7 +51,7 @@ class FrontendActor(workAreaPropsFactory: (Traversable[ActorRef] => Props @@ Wor
 
     case workLog: WorkLog =>
       val msg = asMsg(workLog)
-      println(msg)
+      // println(msg)
       connectedClientUuids.foreach(sendTo(_, msg))
 
     case _ => // ignore unknown messages

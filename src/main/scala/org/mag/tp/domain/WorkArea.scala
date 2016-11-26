@@ -2,7 +2,6 @@ package org.mag.tp.domain
 
 import akka.actor.{Actor, ActorRef, Props, Terminated}
 import akka.routing.{ActorRefRoutee, RandomRoutingLogic, Router}
-import com.softwaremill.macwire.wire
 import com.softwaremill.tagging.{@@, Tagger}
 import org.mag.tp.domain.WorkArea.{Broadcastability, EmployeeCount}
 import org.mag.tp.util.{MandatoryBroadcastingActor, PartiallyBroadcastingActor}
@@ -25,7 +24,6 @@ class WorkArea(val targetEmployeeCount: Int @@ EmployeeCount,
                val baseMandatoryBroadcastables: Traversable[ActorRef])
   extends Actor with PartiallyBroadcastingActor with MandatoryBroadcastingActor {
 
-  println(s"$self: alive and well!\n  $baseMandatoryBroadcastables")
   // FIXME: consider crashes!
   val employer = context.actorOf(employerPropsFactory(self.taggedWith[WorkArea]), "employer")
   val mandatoryBroadcastables = baseMandatoryBroadcastables ++ Seq(employer)
