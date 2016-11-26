@@ -1,9 +1,13 @@
+.stick-to-top {
+  margin-top: -35px; /*FIXME: hideous hack*/
+}
+
 .input-color {
     margin: 2.5em;
     position: relative;
 }
 
-.input-color input {
+.input-color span {
     padding-left: 2.5em;
 }
 

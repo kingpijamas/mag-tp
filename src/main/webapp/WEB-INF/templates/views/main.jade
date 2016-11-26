@@ -3,6 +3,7 @@
 .container
   .row.col-md-12
     button#restart-btn.btn.btn-primary(type="submit") Iniciar
+    button#stop-btn.btn.btn-primary(type="submit") Detener
 
   .row
     .col-md-4
@@ -10,20 +11,18 @@
       div#pie-chart.epoch(style="width: 200px; height: 200px")
 
     .col-md-8
-      h4 Trabajo vs holgazanería en el tiempo
+      h4 Acciones realizadas en el tiempo
       .row
         div#area-chart.epoch(style="width: 800px; height: 200px")
-      .row
+      .row.stick-to-top
         .col-md-2.col-md-offset-4
           .input-color
-            //- FIXME
-            span(type="text" value="Work")
-            div.color-box(style="background-color: navy;")
+            span Work
+            .color-box(style="background-color: navy;")
         .col-md-2
           .input-color
-            //- FIXME
-            span(type="text" value="Loitering")
-            div.color-box(style="background-color: #FF850A;")
+            span Loitering
+            .color-box(style="background-color: #FF850A;")
 
       .row
         div#line-chart.epoch(style="width: 800px; height: 200px")

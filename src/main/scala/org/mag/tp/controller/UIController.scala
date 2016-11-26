@@ -29,6 +29,10 @@ class UIController(frontendActor: ActorRef @@ FrontendActor) extends MagTpStack
     frontendActor ! StartSimulation
   }
 
+  post("/stop") {
+    frontendActor ! PoisonPill
+  }
+
   atmosphere("/ui") {
     new AtmosphereClient {
       def receive: Receive = {
