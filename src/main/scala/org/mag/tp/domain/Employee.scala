@@ -10,6 +10,11 @@ import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
 
 object Employee {
+  // type annotations
+  trait TimerFreq
+  trait MemorySize
+  trait Permeability
+
   // messages
   case object Act
 
@@ -22,11 +27,6 @@ object Employee {
   case object LoiterBehaviour extends Behaviour {
     lazy val opposite: Behaviour = WorkBehaviour
   }
-
-  // type annotations
-  trait TimerFreq
-  trait MemorySize
-  trait Permeability
 
   private class ActionMemory(maxSize: Option[Int]) {
     require(maxSize.forall(_ > 0))
