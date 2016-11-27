@@ -7,6 +7,7 @@ import org.mag.tp.domain.behaviour.RandomBehaviours
 import org.mag.tp.util.{ProbabilityBag, Scheduled}
 
 import scala.collection.mutable
+import scala.collection.immutable
 import scala.concurrent.duration.FiniteDuration
 
 object Employee {
@@ -28,11 +29,11 @@ object Employee {
     lazy val opposite: Behaviour = WorkBehaviour
   }
 
-  private class ActionMemory(maxSize: Option[Int]) {
+  private[domain] class ActionMemory(maxSize: Option[Int]) {
     require(maxSize.forall(_ > 0))
 
     val actions = mutable.Queue[WorkArea.Action]()
-    private val totalsByAction = mutable.Map[WorkArea.Action, Int]().withDefaultValue(0)
+    val totalsByAction = mutable.Map[WorkArea.Action, Int]().withDefaultValue(0)
 
     def +=(action: WorkArea.Action): this.type = {
       if (isFull) {
@@ -53,7 +54,7 @@ object Employee {
     def isLazy: Boolean = total(Work) < total(Loiter)
 
     override def toString: String =
-      s"StatusPerception(actions=$actions, totalWork=${total(Work)}, totalLoitering=${total(Loiter)}"
+      s"StatusPerception(actions=${actions}, totalWork=${total(Work)}, totalLoitering=${total(Loiter)}"
   }
 
   private class GlobalBehaviourObservations(val workingProportion: Double) {
@@ -76,7 +77,7 @@ object Employee {
 
 class Employee(val maxMemories: Option[Int] @@ Employee.MemorySize,
                val permeability: Double @@ Employee.Permeability,
-               var baseBehaviours: ProbabilityBag[Employee.Behaviour],
+               private[domain] var baseBehaviours: ProbabilityBag[Employee.Behaviour],
                val timerFreq: FiniteDuration @@ Employee.TimerFreq,
                val workArea: ActorRef @@ WorkArea)
   extends Actor with RandomBehaviours with Scheduled {
@@ -87,7 +88,7 @@ class Employee(val maxMemories: Option[Int] @@ Employee.MemorySize,
   def timerMessage: Any = Act
   def randomBehaviourTrigger: Any = Act
 
-  private val memoryByEmployee = mutable.Map[ActorRef, ActionMemory]()
+  private[domain] val memoryByEmployee = mutable.Map[ActorRef, ActionMemory]()
     .withDefaultValue(new ActionMemory(maxMemories))
 
   def behaviours: Behaviours = {
@@ -126,12 +127,11 @@ class Employee(val maxMemories: Option[Int] @@ Employee.MemorySize,
     )
   }
 
-  private[this] def knownEmployees = memoryByEmployee.keys
-
   def receive: Receive = actRandomly orElse {
     case action: Action =>
       val memoryForEmployee = memoryByEmployee(sender)
-      memoryForEmployee += action
-      memoryByEmployee(sender) = memoryForEmployee
+      memoryByEmployee(sender) = memoryForEmployee += action
   }
+
+  private[this] def knownEmployees = memoryByEmployee.keys
 }
