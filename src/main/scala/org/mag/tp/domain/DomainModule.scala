@@ -13,22 +13,21 @@ import scala.util.Random
 
 trait DomainModule {
   val memory = None.taggedWith[MemorySize]
-  val permeability = 0.1D.taggedWith[Permeability]
   val employeeTimerFreq = (0.1 seconds).taggedWith[Employee.TimerFreq]
 
   val targetEmployeeCount = 1000.taggedWith[EmployeeCount]
   val broadcastability = 5.taggedWith[Broadcastability]
 
-  val workingProportion = 0.5
+  val workingProportion = 0.99
 
   def employeePropsFactory(workArea: ActorRef @@ WorkArea): Props @@ Employee = {
     def permeabilityAndBehaviours(permeability: Double, behaviourProbs: (Behaviour, Double)*) =
       (permeability.taggedWith[Permeability], ProbabilityBag.complete[Employee.Behaviour](behaviourProbs: _*))
 
     val (permeability, behaviour) = if (Random.nextDouble < workingProportion)
-      permeabilityAndBehaviours(0.9, WorkBehaviour -> 0, LoiterBehaviour -> 1)
+      permeabilityAndBehaviours(0.07, WorkBehaviour -> 1, LoiterBehaviour -> 0)
     else
-      permeabilityAndBehaviours(0, WorkBehaviour -> 1, LoiterBehaviour -> 0)
+      permeabilityAndBehaviours(0, WorkBehaviour -> 0, LoiterBehaviour -> 1)
 
     Props(wire[Employee]).taggedWith[Employee]
   }

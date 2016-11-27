@@ -29,6 +29,8 @@ object Employee {
   trait Permeability
 
   private class ActionMemory(maxSize: Option[Int]) {
+    require(maxSize.forall(_ > 0))
+
     val actions = mutable.Queue[WorkArea.Action]()
     private val totalsByAction = mutable.Map[WorkArea.Action, Int]().withDefaultValue(0)
 
@@ -43,15 +45,18 @@ object Employee {
     }
 
     def isFull: Boolean = maxSize.isDefined && maxSize.get == actions.size
+
     def total(action: WorkArea.Action): Int = totalsByAction(action)
+
     def isWorking: Boolean = total(Work) > total(Loiter)
+
     def isLazy: Boolean = total(Work) < total(Loiter)
 
     override def toString: String =
       s"StatusPerception(actions=$actions, totalWork=${total(Work)}, totalLoitering=${total(Loiter)}"
   }
 
-  private class BehaviourProportions(val workingProportion: Double) {
+  private class GlobalBehaviourObservations(val workingProportion: Double) {
     val loiteringProportion: Double = 1 - workingProportion
 
     val (majorityBehaviour: Behaviour, majorityProportion: Double) = if (workingProportion >= 0.5)
@@ -80,23 +85,17 @@ class Employee(val maxMemories: Option[Int] @@ Employee.MemorySize,
   import WorkArea._
 
   def timerMessage: Any = Act
-
   def randomBehaviourTrigger: Any = Act
 
   private val memoryByEmployee = mutable.Map[ActorRef, ActionMemory]()
     .withDefaultValue(new ActionMemory(maxMemories))
 
   def behaviours: Behaviours = {
-    def work() = {
-      workArea ! Work
-    }
-
-    def loiter() = {
-      workArea ! Loiter
-    }
+    def work() = { workArea ! Work }
+    def loiter() = { workArea ! Loiter }
 
     if (!knownEmployees.isEmpty) {
-      baseBehaviours = updateBehaviourProportions(baseBehaviours)
+      updateBehaviours()
     }
 
     baseBehaviours map {
@@ -105,27 +104,29 @@ class Employee(val maxMemories: Option[Int] @@ Employee.MemorySize,
     }
   }
 
-  private[this] def behaviourProportions = {
-    val workingCount = memoryByEmployee.values.count(_.isWorking)
-    new BehaviourProportions(workingProportion = workingCount.toDouble / knownEmployees.size.toDouble)
-  }
+  private[this] def updateBehaviours() = {
+    def currentGlobalBehaviours = {
+      val workingCount: Double = memoryByEmployee.values count (_.isWorking)
+      new GlobalBehaviourObservations(workingProportion = workingCount / knownEmployees.size)
+    }
 
-  private[this] def updateBehaviourProportions(baseProbs: ProbabilityBag[Employee.Behaviour]) = {
-    val currBehaviourProportions = behaviourProportions
+    val globalBehaviours = currentGlobalBehaviours
     val preferredBehaviour = if (permeability > 0)
-      currBehaviourProportions.majorityBehaviour
+      globalBehaviours.majorityBehaviour
     else
-      currBehaviourProportions.minorityBehaviour
+      globalBehaviours.minorityBehaviour
 
-    val ownProb = baseProbs(preferredBehaviour)
-    val globalProb = currBehaviourProportions.proportion(preferredBehaviour)
-    val newPreferredBehaviourProb = permeability.abs * globalProb + (1 - permeability.abs) * ownProb
+    val ownProb = baseBehaviours(preferredBehaviour)
+    val globalMainProb = globalBehaviours.majorityProportion
+    val newPreferredBehaviourProb = permeability.abs * globalMainProb + (1 - permeability.abs) * ownProb
 
-    ProbabilityBag.complete(
+    baseBehaviours = ProbabilityBag.complete(
       preferredBehaviour -> newPreferredBehaviourProb,
       preferredBehaviour.opposite -> (1 - newPreferredBehaviourProb)
     )
   }
+
+  private[this] def knownEmployees = memoryByEmployee.keys
 
   def receive: Receive = actRandomly orElse {
     case action: Action =>
@@ -133,8 +134,4 @@ class Employee(val maxMemories: Option[Int] @@ Employee.MemorySize,
       memoryForEmployee += action
       memoryByEmployee(sender) = memoryForEmployee
   }
-
-  private[this] def knownEmployees = memoryByEmployee.keys
-
-  private[this] def ownStatus = memoryByEmployee(self)
 }
