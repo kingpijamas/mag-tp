@@ -24,7 +24,7 @@ class WorkLogger(val batchSize: Int,
 
   def timerMessage: Any = FlushLogSummary
 
-  val actionsByActor = mutable.Map[ActorRef, mutable.Buffer[WorkArea.Actions]]()
+  val actionsByActor = mutable.Map[ActorRef, mutable.Buffer[WorkArea.Action]]()
 
   def receive: Receive = {
     case ToggleLogging => become(loggingEnabled)
@@ -34,7 +34,7 @@ class WorkLogger(val batchSize: Int,
   def loggingEnabled: Receive = {
     case ToggleLogging => unbecome()
 
-    case action: WorkArea.Actions =>
+    case action: WorkArea.Action =>
       val knownActions = actionsByActor.getOrElse(sender, mutable.Buffer())
       knownActions += action
       actionsByActor(sender) = knownActions
@@ -48,7 +48,7 @@ class WorkLogger(val batchSize: Int,
     case _ => // ignore unknown messages
   }
 
-  private[this] def statsFor(action: Actions): ActionStats = {
+  private[this] def statsFor(action: Action): ActionStats = {
     val actions = actionsByActor.values
     Stats.full(actions map (_ count (_ == action)))
   }

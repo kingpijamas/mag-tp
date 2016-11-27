@@ -2,6 +2,7 @@ package org.mag.tp.domain
 
 import akka.actor.{Actor, ActorRef, actorRef2Scala}
 import com.softwaremill.tagging.@@
+import org.mag.tp.domain.WorkArea._
 import org.mag.tp.domain.behaviour.RandomBehaviours
 import org.mag.tp.util.{ProbabilityBag, Scheduled}
 
@@ -11,7 +12,6 @@ import scala.concurrent.duration.FiniteDuration
 object Employee {
   // messages
   case object Act
-  case class Paycheck(employee: ActorRef, amount: Double)
 
   sealed trait Behaviour {
     def opposite: Behaviour
@@ -25,16 +25,30 @@ object Employee {
 
   // type annotations
   trait TimerFreq
-  trait Inertia
+  trait MemorySize
   trait Permeability
 
-  case class StatusPerception(totalEarnings: Double = 0D, totalWork: Int = 0, totalLoitering: Int = 0) {
-    def isWorking: Boolean = totalWork > totalLoitering
+  private class ActionMemory(maxSize: Option[Int]) {
+    val actions = mutable.Queue[WorkArea.Action]()
+    private val totalsByAction = mutable.Map[WorkArea.Action, Int]().withDefaultValue(0)
 
-    def isLazy: Boolean = totalWork < totalLoitering
+    def +=(action: WorkArea.Action): this.type = {
+      if (isFull) {
+        val forgottenAction = actions.dequeue()
+        totalsByAction(forgottenAction) -= 1
+      }
+      actions += action
+      totalsByAction(action) += 1
+      this
+    }
+
+    def isFull: Boolean = maxSize.isDefined && maxSize.get == actions.size
+    def total(action: WorkArea.Action): Int = totalsByAction(action)
+    def isWorking: Boolean = total(Work) > total(Loiter)
+    def isLazy: Boolean = total(Work) < total(Loiter)
 
     override def toString: String =
-      s"StatusPerception(totalEarnings=$totalEarnings, totalWork=$totalWork, totalLoitering=$totalLoitering)"
+      s"StatusPerception(actions=$actions, totalWork=${total(Work)}, totalLoitering=${total(Loiter)}"
   }
 
   private class BehaviourProportions(val workingProportion: Double) {
@@ -55,7 +69,7 @@ object Employee {
   }
 }
 
-class Employee(val inertia: Int @@ Employee.Inertia,
+class Employee(val maxMemories: Option[Int] @@ Employee.MemorySize,
                val permeability: Double @@ Employee.Permeability,
                var baseBehaviours: ProbabilityBag[Employee.Behaviour],
                val timerFreq: FiniteDuration @@ Employee.TimerFreq,
@@ -69,21 +83,20 @@ class Employee(val inertia: Int @@ Employee.Inertia,
 
   def randomBehaviourTrigger: Any = Act
 
-  val perceptionsByEmployee = mutable.Map[ActorRef, StatusPerception]()
-    .withDefaultValue(StatusPerception())
+  private val memoryByEmployee = mutable.Map[ActorRef, ActionMemory]()
+    .withDefaultValue(new ActionMemory(maxMemories))
 
   def behaviours: Behaviours = {
     def work() = {
       workArea ! Work
     }
+
     def loiter() = {
       workArea ! Loiter
     }
 
     if (!knownEmployees.isEmpty) {
-      // val oldBehaviours = baseBehaviours
       baseBehaviours = updateBehaviourProportions(baseBehaviours)
-      // println(s"${self}: $oldBehaviours => $baseBehaviours")
     }
 
     baseBehaviours map {
@@ -93,7 +106,7 @@ class Employee(val inertia: Int @@ Employee.Inertia,
   }
 
   private[this] def behaviourProportions = {
-    val workingCount = perceptionsByEmployee.values.count(_.isWorking)
+    val workingCount = memoryByEmployee.values.count(_.isWorking)
     new BehaviourProportions(workingProportion = workingCount.toDouble / knownEmployees.size.toDouble)
   }
 
@@ -107,7 +120,6 @@ class Employee(val inertia: Int @@ Employee.Inertia,
     val ownProb = baseProbs(preferredBehaviour)
     val globalProb = currBehaviourProportions.proportion(preferredBehaviour)
     val newPreferredBehaviourProb = permeability.abs * globalProb + (1 - permeability.abs) * ownProb
-    // println(s"[$preferredBehaviour] ownProb = $ownProb, globalProb = $globalProb, permeability = $permeability => newProb = $newPreferredBehaviourProb")
 
     ProbabilityBag.complete(
       preferredBehaviour -> newPreferredBehaviourProb,
@@ -116,32 +128,13 @@ class Employee(val inertia: Int @@ Employee.Inertia,
   }
 
   def receive: Receive = actRandomly orElse {
-    case Paycheck(employee, amount) =>
-      updatePerception(employee) { oldP =>
-        val newEarnings = oldP.totalEarnings
-        oldP.copy(totalEarnings = newEarnings + amount)
-      }
-
-    case Work =>
-      updatePerception(sender) { oldP =>
-        val newWork = oldP.totalWork + 1
-        oldP.copy(totalWork = newWork)
-      }
-
-    case Loiter =>
-      updatePerception(sender) { oldP =>
-        val newLoitering = oldP.totalLoitering + 1
-        oldP.copy(totalLoitering = newLoitering)
-      }
+    case action: Action =>
+      val memoryForEmployee = memoryByEmployee(sender)
+      memoryForEmployee += action
+      memoryByEmployee(sender) = memoryForEmployee
   }
 
-  private[this] def updatePerception(employee: ActorRef)(f: (StatusPerception => StatusPerception)): Unit = {
-    val currentPerception = perceptionsByEmployee(employee)
-    perceptionsByEmployee(employee) = f(currentPerception)
-    // println(s"${self.path}: ${employee.path} -> ${perceptionsByEmployee(employee)}")  }
-  }
+  private[this] def knownEmployees = memoryByEmployee.keys
 
-  private[this] def knownEmployees = perceptionsByEmployee.keys
-
-  private[this] def ownStatus = perceptionsByEmployee(self)
+  private[this] def ownStatus = memoryByEmployee(self)
 }

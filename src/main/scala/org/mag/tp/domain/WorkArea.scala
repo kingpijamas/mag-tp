@@ -8,9 +8,9 @@ import org.mag.tp.util.{MandatoryBroadcastingActor, PartiallyBroadcastingActor}
 
 object WorkArea {
   // messages
-  sealed trait Actions
-  object Work extends Actions
-  object Loiter extends Actions
+  sealed trait Action
+  object Work extends Action
+  object Loiter extends Action
 
   // type annotations
   trait EmployeeCount
@@ -20,18 +20,16 @@ object WorkArea {
 class WorkArea(val targetEmployeeCount: Int @@ EmployeeCount,
                val broadcastability: Int @@ Broadcastability,
                val employeePropsFactory: (ActorRef @@ WorkArea => Props @@ Employee),
-               val employerPropsFactory: (ActorRef @@ WorkArea => Props @@ Employer),
-               val baseMandatoryBroadcastables: Traversable[ActorRef])
+               // FIXME: consider crashes!
+               val mandatoryBroadcastables: Traversable[ActorRef])
   extends Actor with PartiallyBroadcastingActor with MandatoryBroadcastingActor {
-
-  // FIXME: consider crashes!
-  val employer = context.actorOf(employerPropsFactory(self.taggedWith[WorkArea]), "employer")
-  val mandatoryBroadcastables = baseMandatoryBroadcastables ++ Seq(employer)
 
   var nextId = 0
   var employeeCount = 0
   var partiallyBroadcastables: Router = {
-    val employees = Vector.fill(targetEmployeeCount) { ActorRefRoutee(hireEmployee()) }
+    val employees = Vector.fill(targetEmployeeCount) {
+      ActorRefRoutee(hireEmployee())
+    }
     Router(RandomRoutingLogic(), employees)
   }
 
