@@ -23,6 +23,7 @@ object FrontendActor {
 
   // messages
   case object StartSimulation
+  case object StopSimulation
   // FIXME: type won't be necessary once json-shapeless comes into action
   case class WorkLog(workStats: ActionStats, loiteringStats: ActionStats, `type`: String = "workLog")
 }
@@ -35,7 +36,7 @@ class FrontendActor(workAreaPropsFactory: (Traversable[ActorRef] => Props @@ Wor
   var connectedClientUuids = mutable.Buffer[String]()
   var workArea = Option.empty[ActorRef]
   var workLoggers = Seq[ActorRef]()
-  var restartCount = 0
+  var stopsCount = 0
 
   def receive: Receive = {
     case Connection(clientUuid: String) =>
@@ -43,15 +44,15 @@ class FrontendActor(workAreaPropsFactory: (Traversable[ActorRef] => Props @@ Wor
       println(s"connected clients: $connectedClientUuids")
 
     case StartSimulation =>
-      workArea.foreach(context.stop)
-      workLoggers.foreach(context.stop)
+      stopChildren()
       createWorkLogger()
       workArea = Some(createWorkArea())
-      restartCount += 1
+
+    case StopSimulation =>
+      stopChildren()
 
     case workLog: WorkLog =>
       val msg = asMsg(workLog)
-      // println(msg)
       connectedClientUuids.foreach(sendTo(_, msg))
 
     case _ => // ignore unknown messages
@@ -65,12 +66,18 @@ class FrontendActor(workAreaPropsFactory: (Traversable[ActorRef] => Props @@ Wor
   }
 
   private[this] def createWorkArea() = {
-    context.actorOf(workAreaPropsFactory(workLoggers), s"work-area-$restartCount")
+    context.actorOf(workAreaPropsFactory(workLoggers), s"work-area-$stopsCount")
   }
 
-  private[this] def sendTo(clientUuid: String, msg: String): Unit = {
+  private[this] def stopChildren() = {
+    stopsCount += 1
+    workArea.foreach(context.stop)
+    workLoggers.foreach(context.stop)
+  }
+
+  private[this] def sendTo(clientUuid: String, msg: String) = {
     val resourceFactory = Option(AtmosphereResourceFactory.getDefault.find(clientUuid))
-    resourceFactory map (_.getBroadcaster.broadcast(msg))
+    resourceFactory.foreach(_.getBroadcaster.broadcast(msg))
   }
 
   private[this] def asMsg = {

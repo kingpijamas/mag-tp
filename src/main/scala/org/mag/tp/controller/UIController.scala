@@ -30,7 +30,7 @@ class UIController(frontendActor: ActorRef @@ FrontendActor) extends MagTpStack
   }
 
   post("/stop") {
-    frontendActor ! PoisonPill
+    frontendActor ! StopSimulation
   }
 
   atmosphere("/ui") {
