@@ -17,6 +17,7 @@ request.onMessage = function (response) {
     updatePieChartData(responseBody);
     updateAreaChartData(responseBody);
     updateLineChartData(responseBody);
+    updateCounterData(responseBody);
 };
 request.onClose = function (response) {
     // console.log('request.onClose');

@@ -8,7 +8,16 @@
   .row
     .col-md-4
       h4 Trabajadores vs holgazanes (tiempo real)
-      div#pie-chart.epoch(style="width: 200px; height: 200px")
+      .row
+        div#pie-chart.epoch(style="width: 200px; height: 200px")
+
+      h4 Tiempo para la dominancia (<span id="counter-dominance-limit"></span>%)
+      .row
+        dl.dl-horizontal
+          dt Trabajo
+          dd#counter-work -
+          dt Holgazanería
+          dd#counter-loiter -
 
     .col-md-8
       h4 Trabajadores vs holgazanes

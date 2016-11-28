@@ -2,10 +2,10 @@ var pieChart = null;
 
 function updatePieChartData(data) {
     if (data.type != 'workLog') { return; }
-    var totalTime = data.workingCount + data.loiteringCount;
-    var workedTimePct = (data.workingCount / totalTime) * 100;
-    pieChart.data[0].value = workedTimePct;
-    pieChart.data[1].value = 100 - workedTimePct;
+    var total = data.workingCount + data.loiteringCount;
+    var workingPct = (data.workingCount / total) * 100;
+    pieChart.data[0].value = workingPct;
+    pieChart.data[1].value = 100 - workingPct;
     pieChart.chart.update(pieChart.data);
 }
 
