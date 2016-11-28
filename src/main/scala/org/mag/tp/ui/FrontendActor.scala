@@ -4,7 +4,7 @@ import akka.actor.{Actor, ActorRef, Props}
 import com.softwaremill.tagging._
 import org.atmosphere.cpr.AtmosphereResourceFactory
 import org.mag.tp.domain.WorkArea
-import org.mag.tp.ui.WorkLogger.ToggleLogging
+import org.mag.tp.ui.StatsLogger.ToggleLogging
 import org.mag.tp.util.Stats.FullStats
 import spray.json.DefaultJsonProtocol._
 import spray.json._
@@ -17,7 +17,7 @@ object FrontendActor {
   // FIXME: these two shouldn't be necessary!
   implicit def fullStatsFormatter: JsonFormat[ActionStats] = jsonFormat7(FullStats.apply[Int])
 
-  implicit val workLogFormatter = jsonFormat3(WorkLog)
+  implicit val workLogFormatter = jsonFormat5(WorkLog)
 
   case class Connection(clientUuid: String)
 
@@ -25,17 +25,23 @@ object FrontendActor {
   case object StartSimulation
   case object StopSimulation
   // FIXME: type won't be necessary once json-shapeless comes into action
-  case class WorkLog(workStats: ActionStats, loiteringStats: ActionStats, `type`: String = "workLog")
+  case class WorkLog(workingCount: Int,
+                     newWorkersCount: Int,
+                     // workStats: ActionStats,
+                     loiteringCount: Int,
+                     newLoiterersCount: Int,
+                     // loiteringStats: ActionStats,
+                     `type`: String = "workLog")
 }
 
 class FrontendActor(workAreaPropsFactory: (Traversable[ActorRef] => Props @@ WorkArea),
-                    workLoggersFactory: ((ActorRef @@ FrontendActor) => (Props @@ WorkLogger)))
+                    statsLoggersFactory: ((ActorRef @@ FrontendActor) => (Props @@ StatsLogger)))
   extends Actor {
   import FrontendActor._
 
   var connectedClientUuids = mutable.Buffer[String]()
   var workArea = Option.empty[ActorRef]
-  var workLoggers = Seq[ActorRef]()
+  var statsLoggers = Seq[ActorRef]()
   var stopsCount = 0
 
   def receive: Receive = {
@@ -59,20 +65,20 @@ class FrontendActor(workAreaPropsFactory: (Traversable[ActorRef] => Props @@ Wor
   }
 
   private[this] def createWorkLogger() = {
-    val workLogger = context.actorOf(workLoggersFactory(self.taggedWith[FrontendActor]))
-    workLoggers = Seq(workLogger)
+    val workLogger = context.actorOf(statsLoggersFactory(self.taggedWith[FrontendActor]))
+    statsLoggers = Seq(workLogger)
     workLogger ! ToggleLogging
     workLogger
   }
 
   private[this] def createWorkArea() = {
-    context.actorOf(workAreaPropsFactory(workLoggers), s"work-area-$stopsCount")
+    context.actorOf(workAreaPropsFactory(statsLoggers), s"work-area-$stopsCount")
   }
 
   private[this] def stopChildren() = {
     stopsCount += 1
     workArea.foreach(context.stop)
-    workLoggers.foreach(context.stop)
+    statsLoggers.foreach(context.stop)
   }
 
   private[this] def sendTo(clientUuid: String, msg: String) = {

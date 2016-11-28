@@ -2,16 +2,16 @@
   margin-top: -35px; /*FIXME: hideous hack*/
 }
 
-.input-color {
+.chart-label {
     margin: 2.5em;
     position: relative;
 }
 
-.input-color span {
+.chart-label span {
     padding-left: 2.5em;
 }
 
-.input-color .color-box {
+.chart-label .color-box {
     width: 1em;
     height: 70%;
     display: inline-block;

@@ -7,22 +7,32 @@
 
   .row
     .col-md-4
-      h4 Trabajo vs holgazanería (tiempo real)
+      h4 Trabajadores vs holgazanes (tiempo real)
       div#pie-chart.epoch(style="width: 200px; height: 200px")
 
     .col-md-8
-      h4 Acciones realizadas en el tiempo
+      h4 Trabajadores vs holgazanes
       .row
         div#area-chart.epoch(style="width: 800px; height: 200px")
       .row.stick-to-top
-        .col-md-2.col-md-offset-4
-          .input-color
-            span Work
+        .col-md-offset-2.col-md-4
+          .chart-label
             .color-box(style="background-color: #1F77B4;")
-        .col-md-2
-          .input-color
-            span Loitering
+            span Trabajadores
+        .col-md-4
+          .chart-label
             .color-box(style="background-color: #FF850A;")
+            span Holgazanes
 
+      h4 Nuevos trabajadores vs nuevos holgazanes
       .row
         div#line-chart.epoch(style="width: 800px; height: 200px")
+      .row.stick-to-top
+        .col-md-offset-2.col-md-4
+          .chart-label
+            .color-box(style="background-color: #1F77B4;")
+            span Nuevos trab.
+        .col-md-4
+          .chart-label
+            .color-box(style="background-color: #FF850A;")
+            span Nuevos holg.

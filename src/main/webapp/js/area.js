@@ -3,8 +3,8 @@ var areaChart = null;
 function updateAreaChartData(data) {
     if (data.type != 'workLog') { return; }
     areaChart.ticks++;
-    areaChart.data[0].values.push({x: areaChart.ticks, y: data.workStats.sum});
-    areaChart.data[1].values.push({x: areaChart.ticks, y: data.loiteringStats.sum});
+    areaChart.data[0].values.push({x: areaChart.ticks, y: data.workingCount});
+    areaChart.data[1].values.push({x: areaChart.ticks, y: data.loiteringCount});
     areaChart.chart.update(areaChart.data);
 }
 

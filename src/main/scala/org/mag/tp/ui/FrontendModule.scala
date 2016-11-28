@@ -9,8 +9,8 @@ import scala.concurrent.duration.DurationDouble
 import scala.language.postfixOps
 
 trait FrontendModule extends DomainModule {
-  def workLoggerPropsFactory(frontendActor: ActorRef @@ FrontendActor): Props @@ WorkLogger =
-    Props(wire[WorkLogger]).taggedWith[WorkLogger]
+  def workLoggerPropsFactory(frontendActor: ActorRef @@ FrontendActor): Props @@ StatsLogger =
+    Props(wire[StatsLogger]).taggedWith[StatsLogger]
 
   def createFrontendActor(): ActorRef @@ FrontendActor = {
     val workAreaProps = workAreaPropsFactory _
