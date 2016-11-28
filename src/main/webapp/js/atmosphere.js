@@ -2,7 +2,7 @@ var socket = $.atmosphere;
 var request = {
     url: 'http://localhost:8080/ui',
     contentType: 'application/json',
-    logLevel: 'debug',
+    logLevel: 'info',
     transport: 'sse',
     fallbackTransport: 'long-polling'
 };
@@ -13,10 +13,10 @@ request.onOpen = function (response) {
 };
 request.onMessage = function (response) {
     // console.log('request.onMessage: ' + response.responseBody)
-    var response = JSON.parse(response.responseBody);
-    updatePieChartData(response);
-    updateAreaChartData(response);
-    updateLineChartData(response);
+    var responseBody = JSON.parse(response.responseBody);
+    updatePieChartData(responseBody);
+    updateAreaChartData(responseBody);
+    updateLineChartData(responseBody);
 };
 request.onClose = function (response) {
     // console.log('request.onClose');

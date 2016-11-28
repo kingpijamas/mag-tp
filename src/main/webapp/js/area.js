@@ -1,26 +1,27 @@
 var areaChart = null;
-var ticks = 0;
-
-var areaChartData = [
-    {label: 'Work', values: []},
-    {label: 'Loitering', values: []}
-];
-areaChartData[0].values.push({x: 0, y: 0});
-areaChartData[1].values.push({x: 0, y: 0});
 
 function updateAreaChartData(data) {
-    if (data.type == 'workLog') {
-        ticks++;
-        areaChartData[0].values.push({x: ticks, y: data.workStats.sum});
-        areaChartData[1].values.push({x: ticks, y: data.loiteringStats.sum});
-        areaChart.update(areaChartData);
-    }
+    if (data.type != 'workLog') { return; }
+    areaChart.ticks++;
+    areaChart.data[0].values.push({x: areaChart.ticks, y: data.workStats.sum});
+    areaChart.data[1].values.push({x: areaChart.ticks, y: data.loiteringStats.sum});
+    areaChart.chart.update(areaChart.data);
 }
 
 $(function () {
-    areaChart = $('#area-chart').epoch({
+    areaChart = {
+        ticks: 0
+    };
+    areaChart.data = [
+        {label: 'Work', values: []},
+        {label: 'Loitering', values: []}
+    ];
+    areaChart.data[0].values.push({x: 0, y: 0});
+    areaChart.data[1].values.push({x: 0, y: 0});
+
+    areaChart.chart = $('#area-chart').epoch({
         type: 'area',
-        data: areaChartData,
+        data: areaChart.data,
         axes: ['left', 'right', 'bottom']
     });
 });
