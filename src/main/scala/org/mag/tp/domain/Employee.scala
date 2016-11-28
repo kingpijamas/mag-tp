@@ -54,10 +54,10 @@ object Employee {
     def isLazy: Boolean = total(Work) < total(Loiter)
 
     override def toString: String =
-      s"StatusPerception(actions=${actions}, totalWork=${total(Work)}, totalLoitering=${total(Loiter)}"
+      s"StatusPerception(actions=$actions, totalWork=${total(Work)}, totalLoitering=${total(Loiter)}"
   }
 
-  private class GlobalBehaviourObservations(val workingProportion: Double) {
+  private[domain] class GlobalBehaviourObservations(val workingProportion: Double) {
     val loiteringProportion: Double = 1 - workingProportion
 
     val (majorityBehaviour: Behaviour, majorityProportion: Double) = if (workingProportion >= 0.5)
@@ -72,6 +72,9 @@ object Employee {
       case WorkBehaviour => workingProportion
       case LoiterBehaviour => loiteringProportion
     }
+
+    override def toString: String =
+      s"GlobalBehaviourObservations(majorityBehaviour=$majorityBehaviour, majorityProportion=$majorityProportion)"
   }
 }
 

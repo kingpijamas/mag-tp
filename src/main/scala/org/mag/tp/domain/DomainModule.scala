@@ -18,16 +18,16 @@ trait DomainModule {
   val targetEmployeeCount = 1000.taggedWith[EmployeeCount]
   val broadcastability = 5.taggedWith[Broadcastability]
 
-  val workingProportion = 0.99
+  val workingProportion = 0.50
 
   def employeePropsFactory(workArea: ActorRef @@ WorkArea): Props @@ Employee = {
     def permeabilityAndBehaviours(permeability: Double, behaviourProbs: (Behaviour, Double)*) =
       (permeability.taggedWith[Permeability], ProbabilityBag.complete[Employee.Behaviour](behaviourProbs: _*))
 
     val (permeability, behaviour) = if (Random.nextDouble < workingProportion)
-      permeabilityAndBehaviours(0.07, WorkBehaviour -> 1, LoiterBehaviour -> 0)
+      permeabilityAndBehaviours(0.01, WorkBehaviour -> 0, LoiterBehaviour -> 1)
     else
-      permeabilityAndBehaviours(0, WorkBehaviour -> 0, LoiterBehaviour -> 1)
+      permeabilityAndBehaviours(0, WorkBehaviour -> 1, LoiterBehaviour -> 0)
 
     Props(wire[Employee]).taggedWith[Employee]
   }
