@@ -17,12 +17,12 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
 
   class EmployeeTest(implicit maxMemories: Option[Int] = None,
                      permeability: Double @@ Permeability = 0.5.taggedWith[Permeability],
-                     workingProb: Double @@ WorkingProb = 0.5.taggedWith[WorkingProb]) {
+                     val originalWorkingProb: Double @@ WorkingProb = 0.5.taggedWith[WorkingProb]) {
     val _maxMemories = maxMemories.taggedWith[Employee.MemorySize]
     val _timerFreq = (-1 seconds).taggedWith[TimerFreq]
     val behaviours = ProbabilityBag.complete[Employee.Behaviour](
-      WorkBehaviour -> workingProb,
-      LoiterBehaviour -> (1 - workingProb)
+      WorkBehaviour -> originalWorkingProb,
+      LoiterBehaviour -> (1 - originalWorkingProb)
     )
     val workArea = TestProbe()
     val workAreaRef = workArea.ref.taggedWith[WorkArea]
@@ -31,7 +31,9 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
     val subject: Employee = subjectRef.underlyingActor
 
     def rememberedActions = subject.memoryByEmployee.values.flatMap(_.actions)
+
     def workingProbability = subject.baseBehaviours(WorkBehaviour)
+
     def loiteringProbability = subject.baseBehaviours(LoiterBehaviour)
 
     def influenceTo(action: WorkArea.Action, times: Int = 1): Unit = {
@@ -42,7 +44,7 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
 
   "An Employee" when {
     "witnessing an Action" should {
-      "register it" in new EmployeeTest {
+      "remember it" in new EmployeeTest {
         subjectRef ! Work
         rememberedActions should contain(Work)
       }
@@ -52,22 +54,54 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
   "An impermeable Employee" when {
     implicit val permeability = 0D.taggedWith[Permeability]
 
-    "acting randomly" should {
-      "maintain its tendency to work when influenced to loiter" in {
+    "influenced to loiter" should {
+      "maintain its tendencies unchanged" in {
         implicit val workingProb = 0D.taggedWith[WorkingProb]
         new EmployeeTest {
-          influenceTo(Loiter, times = 1)
+          influenceTo(Loiter)
+
           workingProbability should be(0)
           loiteringProbability should be(1)
         }
       }
+    }
 
-      "maintain its to loiter when influenced to work" in {
+    "influenced to work" should {
+      "maintain its tendencies unchanged" in {
         implicit val workingProb = 1D.taggedWith[WorkingProb]
         new EmployeeTest {
-          influenceTo(Work, times = 1)
+          influenceTo(Work)
+
           workingProbability should be(1)
           loiteringProbability should be(0)
+        }
+      }
+    }
+  }
+
+  "A positively-permeable Employee" when {
+    "the majority is loitering" should {
+      "reduce its tendency to work" in {
+        implicit val permeability = 0.7.taggedWith[Permeability]
+        new EmployeeTest {
+          influenceTo(Loiter, times = 55)
+          influenceTo(Work, times = 45)
+
+          workingProbability should be < originalWorkingProb.asInstanceOf[Double]
+          loiteringProbability should be > (1 - originalWorkingProb.asInstanceOf[Double])
+        }
+      }
+    }
+
+    "the majority is working" should {
+      "increase its tendency to work" in {
+        implicit val permeability = 0.7.taggedWith[Permeability]
+        new EmployeeTest {
+          influenceTo(Loiter, times = 45)
+          influenceTo(Work, times = 55)
+
+          workingProbability should be > originalWorkingProb.asInstanceOf[Double]
+          loiteringProbability should be < (1 - originalWorkingProb.asInstanceOf[Double])
         }
       }
     }
@@ -76,22 +110,54 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
   "A fully positively-permeable Employee" when {
     implicit val permeability = 1D.taggedWith[Permeability]
 
-    "acting randomly" should {
-      "entirely drop its tendency to work when influenced to loiter" in {
+    "influenced to loiter" should {
+      "entirely drop its tendency to work" in {
         implicit val workingProb = 0D.taggedWith[WorkingProb]
         new EmployeeTest {
-          influenceTo(Loiter, times = 1)
+          influenceTo(Loiter)
+
           workingProbability should be(0)
           loiteringProbability should be(1)
         }
       }
+    }
 
-      "entirely drop its tendency to loiter when influenced to work" in {
+    "influenced to work" should {
+      "entirely drop its tendency to loiter" in {
         implicit val workingProb = 1D.taggedWith[WorkingProb]
         new EmployeeTest {
-          influenceTo(Work, times = 1)
+          influenceTo(Work)
+
           workingProbability should be(1)
           loiteringProbability should be(0)
+        }
+      }
+    }
+  }
+
+  "A negatively-permeable Employee" when {
+    "the majority is loitering" should {
+      "increase its tendency to work" in {
+        implicit val permeability = -0.7.taggedWith[Permeability]
+        new EmployeeTest {
+          influenceTo(Loiter, times = 55)
+          influenceTo(Work, times = 45)
+
+          workingProbability should be > originalWorkingProb.asInstanceOf[Double]
+          loiteringProbability should be < (1 - originalWorkingProb.asInstanceOf[Double])
+        }
+      }
+    }
+
+    "the majority is working" should {
+      "reduce its tendency to work" in {
+        implicit val permeability = -0.7.taggedWith[Permeability]
+        new EmployeeTest {
+          influenceTo(Loiter, times = 45)
+          influenceTo(Work, times = 55)
+
+          workingProbability should be < originalWorkingProb.asInstanceOf[Double]
+          loiteringProbability should be > (1 - originalWorkingProb.asInstanceOf[Double])
         }
       }
     }
@@ -100,20 +166,24 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
   "A fully negatively-permeable Employee" when {
     implicit val permeability = -1D.taggedWith[Permeability]
 
-    "acting randomly" should {
-      "entirely drop its tendency to loiter when influenced to loiter" in {
+    "influenced to loiter" should {
+      "entirely drop its tendency to loiter" in {
         implicit val workingProb = 0D.taggedWith[WorkingProb]
         new EmployeeTest {
-          influenceTo(Loiter, times = 1)
+          influenceTo(Loiter)
+
           workingProbability should be(1)
           loiteringProbability should be(0)
         }
       }
+    }
 
-      "entirely drop its tendency to work when influenced to work" in {
+    "influenced to work" should {
+      "entirely drop its tendency to work" in {
         implicit val workingProb = 1D.taggedWith[WorkingProb]
         new EmployeeTest {
-          influenceTo(Work, times = 1)
+          influenceTo(Work)
+
           workingProbability should be(0)
           loiteringProbability should be(1)
         }
