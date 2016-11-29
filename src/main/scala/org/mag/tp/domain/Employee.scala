@@ -51,8 +51,8 @@ object Employee {
     private[this] def forget(): Unit = {
       val ActionMemory(forgottenAction, forgottenAuthor) = actionMemories.dequeue()
 
-      val memoryCountsByForgottenAuthor = memoryCountsByAuthor(forgottenAuthor) -= 1
-      if (memoryCountsByForgottenAuthor == 0) {
+      memoryCountsByAuthor(forgottenAuthor) -= 1
+      if (memoryCountsByAuthor(forgottenAuthor) == 0) {
         memoryCountsByAuthor -= forgottenAuthor
       }
 
