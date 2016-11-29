@@ -2,6 +2,7 @@ package org.mag.tp.domain
 
 import akka.actor.{Actor, ActorRef, actorRef2Scala}
 import com.softwaremill.tagging.@@
+import org.mag.tp.domain.Employee.ActionMemory
 import org.mag.tp.domain.WorkArea._
 import org.mag.tp.domain.behaviour.RandomBehaviours
 import org.mag.tp.util.{ProbabilityBag, Scheduled}
@@ -29,32 +30,46 @@ object Employee {
     lazy val opposite: Behaviour = WorkBehaviour
   }
 
-  private[domain] class ActionMemory(maxSize: Option[Int]) {
-    require(maxSize.forall(_ > 0))
+  private[domain] case class ActionMemory(action: WorkArea.Action, author: ActorRef)
 
-    val actions = mutable.Queue[WorkArea.Action]()
+  private[domain] class Memory(maxSize: Option[Int]) {
+    val actionMemories = mutable.Queue[ActionMemory]()
+    val memoryCountsByAuthor = mutable.Map[ActorRef, Int]().withDefaultValue(0)
     val totalsByAction = mutable.Map[WorkArea.Action, Int]().withDefaultValue(0)
 
-    def +=(action: WorkArea.Action): this.type = {
+    def remember(action: WorkArea.Action, author: ActorRef): Unit = {
       if (isFull) {
-        val forgottenAction = actions.dequeue()
-        totalsByAction(forgottenAction) -= 1
+        forget()
       }
-      actions += action
+      actionMemories += ActionMemory(action, author)
+      memoryCountsByAuthor(author) += 1
       totalsByAction(action) += 1
-      this
     }
 
-    def isFull: Boolean = maxSize.isDefined && maxSize.get == actions.size
+    private[this] def isFull: Boolean = maxSize.isDefined && maxSize.get == actionMemories.size
 
-    def total(action: WorkArea.Action): Int = totalsByAction(action)
+    private[this] def forget(): Unit = {
+      val ActionMemory(forgottenAction, forgottenAuthor) = actionMemories.dequeue()
 
-    def isWorking: Boolean = total(Work) > total(Loiter)
+      val memoryCountsByForgottenAuthor = memoryCountsByAuthor(forgottenAuthor) -= 1
+      if (memoryCountsByForgottenAuthor == 0) {
+        memoryCountsByAuthor -= forgottenAuthor
+      }
 
-    def isLazy: Boolean = total(Work) < total(Loiter)
+      totalsByAction(forgottenAction) -= 1
+    }
+
+    def knownEmployees: Traversable[ActorRef] = memoryCountsByAuthor.keys
+
+    def rememberedActions: Traversable[WorkArea.Action] = actionMemories map (_.action)
+
+    def globalBehaviours: GlobalBehaviourObservations = {
+      val workingCount = totalsByAction(Work).toDouble
+      new GlobalBehaviourObservations(workingProportion = workingCount / actionMemories.size)
+    }
 
     override def toString: String =
-      s"StatusPerception(actions=$actions, totalWork=${total(Work)}, totalLoitering=${total(Loiter)}"
+      s"StatusPerception(actions=$actionMemories, totalWork=${totalsByAction(Work)}, totalLoitering=${totalsByAction(Loiter)}"
   }
 
   private[domain] class GlobalBehaviourObservations(val workingProportion: Double) {
@@ -91,14 +106,13 @@ class Employee(val maxMemories: Option[Int] @@ Employee.MemorySize,
   def timerMessage: Any = Act
   def randomBehaviourTrigger: Any = Act
 
-  private[domain] val memoryByEmployee = mutable.Map[ActorRef, ActionMemory]()
-    .withDefaultValue(new ActionMemory(maxMemories))
+  private[domain] val memory = new Memory(maxMemories)
 
   def behaviours: Behaviours = {
     def work() = { workArea ! Work }
     def loiter() = { workArea ! Loiter }
 
-    if (!knownEmployees.isEmpty) {
+    if (!memory.knownEmployees.isEmpty) {
       updateBehaviours()
     }
 
@@ -109,12 +123,7 @@ class Employee(val maxMemories: Option[Int] @@ Employee.MemorySize,
   }
 
   private[this] def updateBehaviours() = {
-    def currentGlobalBehaviours = {
-      val workingCount: Double = memoryByEmployee.values count (_.isWorking)
-      new GlobalBehaviourObservations(workingProportion = workingCount / knownEmployees.size)
-    }
-
-    val globalBehaviours = currentGlobalBehaviours
+    val globalBehaviours = memory.globalBehaviours
     val preferredBehaviour = if (permeability > 0)
       globalBehaviours.majorityBehaviour
     else
@@ -131,10 +140,6 @@ class Employee(val maxMemories: Option[Int] @@ Employee.MemorySize,
   }
 
   def receive: Receive = actRandomly orElse {
-    case action: Action =>
-      val memoryForEmployee = memoryByEmployee(sender)
-      memoryByEmployee(sender) = memoryForEmployee += action
+    case action: Action => memory.remember(action, sender)
   }
-
-  private[this] def knownEmployees = memoryByEmployee.keys
 }

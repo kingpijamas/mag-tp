@@ -30,8 +30,6 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
     val subjectRef: TestActorRef[Employee] = TestActorRef.create(system, Props(wire[Employee]))
     val subject: Employee = subjectRef.underlyingActor
 
-    def rememberedActions = subject.memoryByEmployee.values.flatMap(_.actions)
-
     def workingProbability = subject.baseBehaviours(WorkBehaviour)
 
     def loiteringProbability = subject.baseBehaviours(LoiterBehaviour)
@@ -45,8 +43,11 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
   "An Employee" when {
     "witnessing an Action" should {
       "remember it" in new EmployeeTest {
-        subjectRef ! Work
-        rememberedActions should contain(Work)
+        val action = Work
+        subjectRef ! action
+        subject.memory.rememberedActions should contain(action)
+        subject.memory.totalsByAction(action) should be(1)
+        subject.memory.memoryCountsByAuthor.values should contain(1)
       }
     }
   }
@@ -84,8 +85,8 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
       "reduce its tendency to work" in {
         implicit val permeability = 0.7.taggedWith[Permeability]
         new EmployeeTest {
-          influenceTo(Loiter, times = 55)
-          influenceTo(Work, times = 45)
+          influenceTo(Loiter, times = 200)
+          influenceTo(Work, times = 50)
 
           workingProbability should be < originalWorkingProb.asInstanceOf[Double]
           loiteringProbability should be > (1 - originalWorkingProb.asInstanceOf[Double])
@@ -97,8 +98,8 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
       "increase its tendency to work" in {
         implicit val permeability = 0.7.taggedWith[Permeability]
         new EmployeeTest {
-          influenceTo(Loiter, times = 45)
-          influenceTo(Work, times = 55)
+          influenceTo(Loiter, times = 50)
+          influenceTo(Work, times = 200)
 
           workingProbability should be > originalWorkingProb.asInstanceOf[Double]
           loiteringProbability should be < (1 - originalWorkingProb.asInstanceOf[Double])
@@ -140,8 +141,8 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
       "increase its tendency to work" in {
         implicit val permeability = -0.7.taggedWith[Permeability]
         new EmployeeTest {
-          influenceTo(Loiter, times = 55)
-          influenceTo(Work, times = 45)
+          influenceTo(Loiter, times = 200)
+          influenceTo(Work, times = 50)
 
           workingProbability should be > originalWorkingProb.asInstanceOf[Double]
           loiteringProbability should be < (1 - originalWorkingProb.asInstanceOf[Double])
@@ -153,8 +154,8 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
       "reduce its tendency to work" in {
         implicit val permeability = -0.7.taggedWith[Permeability]
         new EmployeeTest {
-          influenceTo(Loiter, times = 45)
-          influenceTo(Work, times = 55)
+          influenceTo(Loiter, times = 50)
+          influenceTo(Work, times = 200)
 
           workingProbability should be < originalWorkingProb.asInstanceOf[Double]
           loiteringProbability should be > (1 - originalWorkingProb.asInstanceOf[Double])
