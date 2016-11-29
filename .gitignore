@@ -1,6 +1,7 @@
 *.class
 *.log
 .cache-main
+.cache-tests
 
 # Akka specific
 logs/*
