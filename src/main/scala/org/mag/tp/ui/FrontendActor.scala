@@ -4,12 +4,14 @@ import akka.actor.{Actor, ActorRef, Props}
 import com.softwaremill.tagging._
 import org.atmosphere.cpr.AtmosphereResourceFactory
 import org.mag.tp.domain.WorkArea
-import org.mag.tp.ui.StatsLogger.ToggleLogging
+import org.mag.tp.util.PausableActor
+import org.mag.tp.util.PausableActor.{Pause, Resume}
 import org.mag.tp.util.Stats.FullStats
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
 import scala.collection.mutable
+import scala.concurrent.duration.FiniteDuration
 
 object FrontendActor {
   type ActionStats = FullStats[Int]
@@ -24,6 +26,7 @@ object FrontendActor {
   // messages
   case object StartSimulation
   case object StopSimulation
+  case object SimulationStep
   // FIXME: type won't be necessary once json-shapeless comes into action
   case class WorkLog(workingCount: Int,
                      newWorkersCount: Int,
@@ -34,10 +37,12 @@ object FrontendActor {
                      `type`: String = "workLog")
 }
 
-class FrontendActor(workAreaPropsFactory: (Traversable[ActorRef] => Props @@ WorkArea),
+class FrontendActor(timerFreq: FiniteDuration @@ StatsLogger.TimerFreq,
+                    workAreaPropsFactory: (Traversable[ActorRef] => Props @@ WorkArea),
                     statsLoggersFactory: ((ActorRef @@ FrontendActor) => (Props @@ StatsLogger)))
   extends Actor {
   import FrontendActor._
+  import context._
 
   var connectedClientUuids = mutable.Buffer[String]()
   var workArea = Option.empty[ActorRef]
@@ -54,6 +59,17 @@ class FrontendActor(workAreaPropsFactory: (Traversable[ActorRef] => Props @@ Wor
       createWorkLogger()
       workArea = Some(createWorkArea())
 
+    case Pause =>
+      pauseChildren()
+
+    case Resume =>
+      resumeChildren()
+
+    case SimulationStep =>
+      pauseChildren()
+      context.system.scheduler.scheduleOnce(timerFreq) { resumeChildren() }
+      context.system.scheduler.scheduleOnce(timerFreq * 2) { pauseChildren() }
+
     case StopSimulation =>
       stopChildren()
 
@@ -67,7 +83,7 @@ class FrontendActor(workAreaPropsFactory: (Traversable[ActorRef] => Props @@ Wor
   private[this] def createWorkLogger() = {
     val workLogger = context.actorOf(statsLoggersFactory(self.taggedWith[FrontendActor]))
     statsLoggers = Seq(workLogger)
-    workLogger ! ToggleLogging
+    workLogger ! Resume
     workLogger
   }
 
@@ -92,5 +108,15 @@ class FrontendActor(workAreaPropsFactory: (Traversable[ActorRef] => Props @@ Wor
     }
 
     jsonify andThen (_.compactPrint)
+  }
+
+  private[this] def pauseChildren(): Unit = {
+    workArea.foreach(_ ! Pause)
+    statsLoggers.foreach(_ ! Pause)
+  }
+
+  private[this] def resumeChildren(): Unit = {
+    workArea.foreach(_ ! Resume)
+    statsLoggers.foreach(_ ! Resume)
   }
 }

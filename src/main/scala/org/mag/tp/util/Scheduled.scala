@@ -9,7 +9,7 @@ import scala.language.postfixOps
 trait Scheduled {
   self: Actor =>
 
-  def initialDelay = 0 seconds
+  def initialDelay: FiniteDuration = 0 seconds
   def timerMessage: Any
   def timerFreq: FiniteDuration
 

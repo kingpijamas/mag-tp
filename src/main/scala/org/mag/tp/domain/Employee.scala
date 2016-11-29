@@ -2,20 +2,19 @@ package org.mag.tp.domain
 
 import akka.actor.{Actor, ActorRef, actorRef2Scala}
 import com.softwaremill.tagging.@@
-import org.mag.tp.domain.Employee.ActionMemory
 import org.mag.tp.domain.WorkArea._
 import org.mag.tp.domain.behaviour.RandomBehaviours
-import org.mag.tp.util.{ProbabilityBag, Scheduled}
+import org.mag.tp.util.{PausableActor, ProbabilityBag, Scheduled}
 
 import scala.collection.mutable
-import scala.collection.immutable
 import scala.concurrent.duration.FiniteDuration
 
 object Employee {
   // type annotations
-  trait TimerFreq
-  trait MemorySize
-  trait Permeability
+  sealed trait TypeAnnotation
+  trait TimerFreq extends TypeAnnotation
+  trait MemorySize extends TypeAnnotation
+  trait Permeability extends TypeAnnotation
 
   // messages
   case object Act
@@ -69,7 +68,9 @@ object Employee {
     }
 
     override def toString: String =
-      s"StatusPerception(actions=$actionMemories, totalWork=${totalsByAction(Work)}, totalLoitering=${totalsByAction(Loiter)}"
+      s"StatusPerception(actions=$actionMemories," +
+        " totalWork=${totalsByAction(Work)},"+
+        " totalLoitering=${totalsByAction(Loiter)}"
   }
 
   private[domain] class GlobalBehaviourObservations(val workingProportion: Double) {
@@ -98,7 +99,7 @@ class Employee(val maxMemories: Option[Int] @@ Employee.MemorySize,
                private[domain] var baseBehaviours: ProbabilityBag[Employee.Behaviour],
                val timerFreq: FiniteDuration @@ Employee.TimerFreq,
                val workArea: ActorRef @@ WorkArea)
-  extends Actor with RandomBehaviours with Scheduled {
+  extends Actor with RandomBehaviours with Scheduled with PausableActor {
 
   import Employee._
   import WorkArea._
@@ -139,7 +140,7 @@ class Employee(val maxMemories: Option[Int] @@ Employee.MemorySize,
     )
   }
 
-  def receive: Receive = actRandomly orElse {
+  def receive: Receive = respectPauses orElse actRandomly orElse {
     case action: Action => memory.remember(action, sender)
   }
 }
