@@ -2,7 +2,6 @@ var counters = null;
 
 function updateCounterData(data) {
     if (data.type != 'workLog') { return; }
-    if (counters.limitReached) { return; }
     counters.ticks++;
 
     var total = data.workingCount + data.loiteringCount;
@@ -10,20 +9,21 @@ function updateCounterData(data) {
     var loiteringPct = data.loiteringCount / total;
 
     var counterToUpdate = null;
-    if (workingPct >= counters.limit) {
+    if (counters.limitReached != 'work' && workingPct >= counters.limit) {
+        counters.limitReached = 'work';
         counterToUpdate = counters.work;
-    } else if (loiteringPct >= counters.limit) {
+    } else if (counters.limitReached != 'loiter' && loiteringPct >= counters.limit) {
+        counters.limitReached = 'loiter';
         counterToUpdate = counters.loiter;
     } else {
         return;
     }
 
-    counters.limitReached = true;
     counterToUpdate.text(counters.ticks);
 }
 
 function resetCounters() {
-    counters.limitReached = false;
+    counters.limitReached = null;
     counters.ticks = 0;
     counters.work.text('-');
     counters.loiter.text('-');

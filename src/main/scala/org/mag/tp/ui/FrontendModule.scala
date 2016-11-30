@@ -33,8 +33,10 @@ class FrontendModule(system: ActorSystem,
     Props(wire[StatsLogger]).taggedWith[StatsLogger]
 
   def createFrontendActor(): ActorRef @@ FrontendActor = {
+    reset() // XXX
     val workAreaProps = workAreaPropsFactory _
     val statsLoggerProps = statsLoggerPropsFactory _
-    system.actorOf(Props(wire[FrontendActor]), "frontend").taggedWith[FrontendActor]
+    system.actorOf(Props(wire[FrontendActor])).taggedWith[FrontendActor]
+    // , "frontend"
   }
 }

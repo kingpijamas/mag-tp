@@ -10,7 +10,7 @@ import org.mag.tp.util.PausableActor.{Pause, Resume}
 import org.scalatra.SessionSupport
 import org.scalatra.atmosphere.{AtmosphereClient, AtmosphereSupport, Connected, JsonMessage}
 import org.scalatra.json.{JValueResult, JacksonJsonSupport}
-
+import scala.collection.mutable
 import scala.concurrent.duration._
 
 class UIController(system: ActorSystem) extends MagTpStack
@@ -21,32 +21,48 @@ class UIController(system: ActorSystem) extends MagTpStack
 
   implicit protected val jsonFormats: Formats = DefaultFormats // XXX move!
 
+  private var frontendModule: Option[FrontendModule] = None
   private var frontendActor: Option[ActorRef] = None
-
-  private[this] def resetFrontendActor(): Unit = {
-    frontendActor.foreach(system.stop)
-    //  val _employeeTimerFreq = (0.1 seconds).taggedWith[Employee.TimerFreq]
-    //  val targetEmployeeCount = 1000.taggedWith[EmployeeCount]
-    //  val _memory = Some(1).taggedWith[MemorySize]
-    //  val _broadcastability = 5.taggedWith[Broadcastability]
-    //  val workersPermeabilityAtStart = -0.3
-    //  val workingProportionAtStart = 0.90
-    //  val _statsLoggerTimerFreq = (0.5 seconds).taggedWith[StatsLogger.TimerFreq]
-    val frontendModule = new FrontendModule(system,
-      employeeTimerFreq = 0.2 seconds,
-      workingEmployeesCount = 500,
-      loiteringEmployeesCount = 500,
-      memory = Some(1),
-      broadcastability = 5,
-      workersPermeabilityAtStart = 0.5,
-      loiterersPermeabilityAtStart = 0,
-      statsLoggerTimerFreq = 0.7 seconds)
-    frontendActor = Some(frontendModule.createFrontendActor())
-  }
+  private var clientUuids = mutable.Buffer[String]()
 
   get("/") {
     contentType = "text/html"
-    jade("main.jade")
+
+    frontendActor.foreach(system.stop)
+
+    jade("setup.jade")
+  }
+
+  post("/simulation") {
+    contentType = "text/html"
+
+    val workersCount: Int = params.get("workersCount").map(_.toInt).getOrElse(500)
+    val loiterersCount: Int = params.get("loiterersCount").map(_.toInt).getOrElse(500)
+    val employeesMemory: Option[Int] = params.get("employeesMemory") match {
+      case None => None
+      case Some(str) if str.isEmpty => None
+      case Some(str) => Some(str.toInt)
+    }
+    val broadcastability: Int = params.get("broadcastability").map(_.toInt).getOrElse(5)
+    val workersPermeability: Double = params.get("workersPermeability").map(_.toDouble).getOrElse(0.5)
+    val loiterersPermeability: Double = params.get("loiterersPermeability").map(_.toDouble).getOrElse(0)
+    val backendTimerFreq: Double = params.get("backendTimerFreq").map(_.toDouble).getOrElse(0.2)
+    val loggingTimerFreq: Double = params.get("loggingTimerFreq").map(_.toDouble).getOrElse(0.7)
+
+    println(params.toMap)
+
+    frontendModule = Some(new FrontendModule(system,
+      workingEmployeesCount = workersCount,
+      loiteringEmployeesCount = loiterersCount,
+      memory = employeesMemory,
+      broadcastability = broadcastability,
+      workersPermeabilityAtStart = workersPermeability,
+      loiterersPermeabilityAtStart = loiterersPermeability,
+      statsLoggerTimerFreq = loggingTimerFreq seconds,
+      employeeTimerFreq = backendTimerFreq seconds
+    ))
+
+    jade("simulation.jade")
   }
 
   post("/restart") {
@@ -54,8 +70,16 @@ class UIController(system: ActorSystem) extends MagTpStack
     frontendActor.foreach(_ ! StartSimulation)
   }
 
-  post("/stop") {
-    frontendActor.foreach(_ ! StopSimulation)
+  //  post("/stop") {
+  //    frontendActor.foreach(_ ! StopSimulation)
+  //    resetFrontendActor()
+  //  }
+
+  private[this] def resetFrontendActor(): Unit = {
+    frontendActor.foreach(system.stop(_))
+    val _frontendActor = frontendModule.get.createFrontendActor()
+    frontendActor = Some(_frontendActor)
+    clientUuids.foreach(_frontendActor ! Connection(_))
   }
 
   post("/pause") {
@@ -70,7 +94,7 @@ class UIController(system: ActorSystem) extends MagTpStack
     frontendActor.foreach(_ ! SimulationStep)
   }
 
-  atmosphere("/ui") {
+    atmosphere("/ui") {
     new AtmosphereClient {
       def receive: Receive = {
         case Connected => // ignore
@@ -78,6 +102,7 @@ class UIController(system: ActorSystem) extends MagTpStack
         // case Error(Some(error))                      =>
         // case TextMessage(text)                       =>
         case JsonMessage(_) =>
+          clientUuids += uuid
           frontendActor.foreach(_ ! Connection(uuid))
 
         case msg: Any => // log unhandled messages

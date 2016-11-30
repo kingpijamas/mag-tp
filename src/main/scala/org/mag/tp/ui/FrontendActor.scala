@@ -88,7 +88,7 @@ class FrontendActor(timerFreq: FiniteDuration @@ StatsLogger.TimerFreq,
   }
 
   private[this] def createWorkArea() = {
-    context.actorOf(workAreaPropsFactory(statsLoggers), s"work-area-$stopsCount")
+    context.actorOf(workAreaPropsFactory(statsLoggers)) // , s"work-area-$stopsCount"
   }
 
   private[this] def stopChildren() = {

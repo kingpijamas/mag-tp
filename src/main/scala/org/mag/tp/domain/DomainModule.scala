@@ -46,4 +46,9 @@ class DomainModule(val system: ActorSystem,
     val employeeProps = employeePropsFactory _
     Props(wire[WorkArea]).taggedWith[WorkArea]
   }
+
+  def reset(): Unit = { // XXX
+    workingEmployeesToCreate = workingEmployeesCount
+    loiteringEmployeesToCreate = loiteringEmployeesCount
+  }
 }

@@ -13,8 +13,6 @@ $(function () {
     pieChart = {};
 
     pieChart.data = [
-        // {label: 'Work', value: 0},
-        // {label: 'Loitering', value: 100}
         {label: 'Trabajadores', value: 0},
         {label: 'Holgazanes', value: 100}
     ];

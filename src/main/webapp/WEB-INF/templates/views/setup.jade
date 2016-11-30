@@ -1,0 +1,55 @@
+- attributes("title") = "TP Multiagentes"
+
+.container
+  h1 Trabajo Práctico Multiagentes
+
+  form.form-horizontal(action="/simulation" method="post")
+    h3 Parámetros generales
+    div.form-group
+      label.col-md-4(for="workers-count") Trabajadores iniciales
+      div.col-md-3
+        input.form-control#workers-count(name="workersCount" type="number" placeholder="500")
+
+    div.form-group
+      label.col-md-4(for="loiterers-count") Holgazanes iniciales
+      div.col-md-3
+        input.form-control#loiterers-count(name="loiterersCount" type="number" placeholder="500")
+
+    div.form-group
+      label.col-md-4(for="employees-memory") Memoria de los empleados (# de acciones)
+      div.col-md-3
+        input.form-control#employees-memory(name="employeesMemory" type="number" placeholder="Infinite")
+
+    div.form-group
+      label.col-md-4(for="broadcastability") Visibilidad (# de testigos para cada acción)
+      div.col-md-3
+        input.form-control#broadcastability(name="broadcastability" type="number" placeholder="5")
+
+    div.form-group
+      label.col-md-4(for="workers-permeability") Permeabilidad de los trabajadores
+      div.col-md-3
+        input.form-control#workers-permeability(name="workersPermeability" type="text" placeholder="0.5")
+
+    div.form-group
+      label.col-md-4(for="loiterers-permeability") Permeabilidad de los holgazanes
+      div.col-md-3
+        input.form-control#loiterers-permeability(name="loiterersPermeability" type="text" placeholder="0")
+
+    div.form-group
+      div.col-md-5
+        hr
+
+    h3 Parámetros de performance
+    div.form-group
+      label.col-md-4(for="backend-timer-freq") Frecuencia backend (seg.)
+      div.col-md-3
+        input.form-control#backend-timer-freq(name="backendTimerFreq" type="text" placeholder="0.2")
+
+    div.form-group
+      label.col-md-4(for="logging-timer-freq") Frecuencia logging (seg.)
+      div.col-md-3
+        input.form-control#logging-timer-freq(name="loggingTimerFreq" type="text" placeholder="0.7")
+
+    div.form-group
+      div.col-md-offset-2.col-md-10
+        button.btn.btn-primary(type="submit") Confirmar parámetros

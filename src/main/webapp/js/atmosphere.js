@@ -1,4 +1,9 @@
+var atmosphereStarted = false;
+
 function startAtmosphereConnection(url) {
+    if (atmosphereStarted) { return; }
+
+    atmosphereStarted = true;
     var socket = $.atmosphere;
     var request = {
         url: url,
@@ -22,9 +27,11 @@ function startAtmosphereConnection(url) {
     };
     request.onClose = function (response) {
         // console.log('request.onClose');
+        atmosphereStarted = false;
     };
     request.onError = function (response) {
         // console.log('request.onError');
+        atmosphereStarted = false;
     };
 
     var subSocket = socket.subscribe(request);

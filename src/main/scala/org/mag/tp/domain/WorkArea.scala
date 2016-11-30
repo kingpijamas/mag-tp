@@ -50,7 +50,7 @@ class WorkArea(val targetEmployeeCount: Int @@ EmployeeCount,
 
   private[this] def hireEmployee(): ActorRef = {
     val employeeProps = employeePropsFactory(self.taggedWith[WorkArea])
-    val employee = context.actorOf(employeeProps, s"employee-$nextId")
+    val employee = context.actorOf(employeeProps) //, s"employee-$nextId")
 
     context.watch(employee)
     employeeCount += 1
