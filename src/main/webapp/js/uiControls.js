@@ -3,7 +3,7 @@ $(() => {
     restartButton.click(() => {
       resetCounters();
       restartButton.text('Reiniciar');
-      $.post('/restart');
+      $.post('/restart', (data) => startAtmosphereConnection('/ui'));
     });
     $('#pause-btn').click(() => $.post('/pause'));
     $('#resume-btn').click(() => $.post('/resume'));

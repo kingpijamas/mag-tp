@@ -7,28 +7,37 @@ import org.mag.tp.domain.Employee._
 import org.mag.tp.domain.WorkArea.{Broadcastability, EmployeeCount}
 import org.mag.tp.util.ProbabilityBag
 
-import scala.concurrent.duration.DurationDouble
+import scala.concurrent.duration.FiniteDuration
 import scala.language.postfixOps
-import scala.util.Random
 
-trait DomainModule {
-  val employeeTimerFreq = (0.1 seconds).taggedWith[Employee.TimerFreq]
+class DomainModule(val system: ActorSystem,
+                   val employeeTimerFreq: FiniteDuration,
+                   val workingEmployeesCount: Int,
+                   val loiteringEmployeesCount: Int,
+                   val memory: Option[Int],
+                   val broadcastability: Int,
+                   val workersPermeabilityAtStart: Double,
+                   val loiterersPermeabilityAtStart: Double) {
+  val _employeeTimerFreq = employeeTimerFreq.taggedWith[Employee.TimerFreq]
+  val _memory = memory.taggedWith[MemorySize]
+  val targetEmployeeCount = (workingEmployeesCount + loiteringEmployeesCount).taggedWith[EmployeeCount]
+  val _broadcastability = broadcastability.taggedWith[Broadcastability]
 
-  val targetEmployeeCount = 1000.taggedWith[EmployeeCount]
-
-  val memory = Some(1).taggedWith[MemorySize]
-  val broadcastability = 5.taggedWith[Broadcastability]
-  val workingProportionAtStart = 0.90
-  val workersPermeabilityAtStart = -0.3
+  // XXX
+  private var workingEmployeesToCreate = workingEmployeesCount
+  private var loiteringEmployeesToCreate = loiteringEmployeesCount
 
   def employeePropsFactory(workArea: ActorRef @@ WorkArea): Props @@ Employee = {
     def permeabilityAndBehaviours(permeability: Double, behaviourProbs: (Behaviour, Double)*) =
       (permeability.taggedWith[Permeability], ProbabilityBag.complete[Employee.Behaviour](behaviourProbs: _*))
 
-    val (permeability, behaviour) = if (Random.nextDouble < workingProportionAtStart)
+    val (permeability, behaviour) = if (workingEmployeesToCreate > 0) {
+      workingEmployeesToCreate -= 1 // XXX
       permeabilityAndBehaviours(workersPermeabilityAtStart, WorkBehaviour -> 1, LoiterBehaviour -> 0)
-    else
-      permeabilityAndBehaviours(0, WorkBehaviour -> 0, LoiterBehaviour -> 1)
+    } else {
+      loiteringEmployeesToCreate -= 1 // XXX
+      permeabilityAndBehaviours(loiterersPermeabilityAtStart, WorkBehaviour -> 0, LoiterBehaviour -> 1)
+    }
 
     Props(wire[Employee]).taggedWith[Employee]
   }
@@ -37,6 +46,4 @@ trait DomainModule {
     val employeeProps = employeePropsFactory _
     Props(wire[WorkArea]).taggedWith[WorkArea]
   }
-
-  def system: ActorSystem
 }
