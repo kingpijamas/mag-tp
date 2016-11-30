@@ -33,23 +33,25 @@ class UIController(system: ActorSystem) extends MagTpStack
     jade("setup.jade")
   }
 
+  private[this] def getParam(key: String) = {
+    params.get(key).flatMap { str => 
+      if (!str.isEmpty) Some(str) else None
+    }
+  }
+
   post("/simulation") {
     contentType = "text/html"
 
-    val workersCount: Int = params.get("workersCount").map(_.toInt).getOrElse(500)
-    val loiterersCount: Int = params.get("loiterersCount").map(_.toInt).getOrElse(500)
-    val employeesMemory: Option[Int] = params.get("employeesMemory") match {
-      case None => None
-      case Some(str) if str.isEmpty => None
-      case Some(str) => Some(str.toInt)
-    }
-    val broadcastability: Int = params.get("broadcastability").map(_.toInt).getOrElse(5)
-    val workersPermeability: Double = params.get("workersPermeability").map(_.toDouble).getOrElse(0.5)
-    val loiterersPermeability: Double = params.get("loiterersPermeability").map(_.toDouble).getOrElse(0)
-    val backendTimerFreq: Double = params.get("backendTimerFreq").map(_.toDouble).getOrElse(0.2)
-    val loggingTimerFreq: Double = params.get("loggingTimerFreq").map(_.toDouble).getOrElse(0.7)
-
     println(params.toMap)
+
+    val workersCount: Int = getParam("workersCount").map(_.toInt).getOrElse(500)
+    val loiterersCount: Int = getParam("loiterersCount").map(_.toInt).getOrElse(500)
+    val employeesMemory: Option[Int] = getParam("employeesMemory").map(_.toInt)
+    val broadcastability: Int = getParam("broadcastability").map(_.toInt).getOrElse(5)
+    val workersPermeability: Double = getParam("workersPermeability").map(_.toDouble).getOrElse(0.5)
+    val loiterersPermeability: Double = getParam("loiterersPermeability").map(_.toDouble).getOrElse(0)
+    val backendTimerFreq: Double = getParam("backendTimerFreq").map(_.toDouble).getOrElse(0.2)
+    val loggingTimerFreq: Double = getParam("loggingTimerFreq").map(_.toDouble).getOrElse(0.7)
 
     frontendModule = Some(new FrontendModule(system,
       workingEmployeesCount = workersCount,
