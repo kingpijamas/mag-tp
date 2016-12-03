@@ -7,6 +7,7 @@ import org.mag.tp.util.{PausableActor, Scheduled, Stats}
 
 import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
+import scala.reflect.ClassTag
 
 object StatsLogger {
   sealed trait TypeAnnotation
@@ -41,11 +42,11 @@ class StatsLogger(val timerFreq: FiniteDuration @@ StatsLogger.TimerFreq,
       actionsByActor(sender) = knownActions
 
     case FlushLogSummary =>
-      val workingCount = actorsCount(dominantAction = Work)
-      val newWorkersCount = changedActorsCount(newAction = Work)
+      val workingCount = actorsCount[Work]
+      val newWorkersCount = changedActorsCount[Work]
       //  val workStats = statsFor(Work)
-      val loiteringCount = actorsCount(dominantAction = Loiter)
-      val newLoiterersCount = changedActorsCount(newAction = Loiter)
+      val loiteringCount = actorsCount[Loiter]
+      val newLoiterersCount = changedActorsCount[Loiter]
       //  val loiteringStats = statsFor(Loiter)
       prevActionsByActor = actionsByActor
       actionsByActor = mutable.Map[ActorRef, mutable.Buffer[WorkArea.Action]]()
@@ -61,15 +62,15 @@ class StatsLogger(val timerFreq: FiniteDuration @@ StatsLogger.TimerFreq,
     case _ => // ignore unknown messages
   }
 
-  private[this] def actorsCount(dominantAction: WorkArea.Action): Int = {
-    actionsByActor.values count (isDominant(_, dominantAction))
+  private[this] def actorsCount[A:ClassTag]: Int = {
+    actionsByActor.values count (isDominant[A](_))
   }
 
-  private[this] def changedActorsCount(newAction: WorkArea.Action): Int = {
+  private[this] def changedActorsCount[A:ClassTag]: Int = {
     actionsByActor count { case (actor, actions) =>
-      if (isDominant(actions, newAction)) {
+      if (isDominant[A](actions)) {
         prevActionsByActor.get(actor) match {
-          case Some(oldActions) => !isDominant(oldActions, newAction)
+          case Some(oldActions) => !isDominant[A](oldActions)
           case _ => false
         }
       } else {
@@ -78,13 +79,15 @@ class StatsLogger(val timerFreq: FiniteDuration @@ StatsLogger.TimerFreq,
     }
   }
 
-  private[this] def isDominant(actions: Traversable[WorkArea.Action], action: WorkArea.Action): Boolean = {
-    val dominantActionCount = actions count (_ == action)
+  private[this] def isDominant[A:ClassTag](actions: Traversable[WorkArea.Action]): Boolean = {
+    val clazz = implicitly[ClassTag[A]].runtimeClass
+    val dominantActionCount = actions count (clazz.isInstance(_))
     dominantActionCount > (actions.size / 2.0)
   }
 
-  private[this] def statsFor(action: Action): ActionStats = {
+  private[this] def statsFor[A:ClassTag]: ActionStats = {
+    val clazz = implicitly[ClassTag[A]].runtimeClass
     val actions = actionsByActor.values
-    Stats.full(actions map (_ count (_ == action)))
+    Stats.full(actions map (_ count (clazz.isInstance(_))))
   }
 }

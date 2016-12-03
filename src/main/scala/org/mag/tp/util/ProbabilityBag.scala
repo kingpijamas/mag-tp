@@ -30,22 +30,22 @@ object ProbabilityBag {
     new ProbabilityBag(entries, complete)
   }
 
-  private[this] def validate(ns: Traversable[Double], complete: Boolean): Unit = {
+  private[this] def validate(probCandidates: Traversable[Double], complete: Boolean): Unit = {
     def checkAllAreProbs() = {
       def isProb(d: Double) = d >= 0 && d <= 1
 
-      ns.find(!isProb(_)).foreach { invalidNumber =>
+      probCandidates.find(!isProb(_)).foreach { invalidNumber =>
         throw new IllegalArgumentException(s"$invalidNumber is not a probability")
       }
     }
 
     def checkSumIsValid() = {
-      ns.sum match {
-        case totalProb if totalProb < 1 && complete =>
-          throw new IllegalArgumentException(s"$ns do not add up to 1. There are uncontemplated cases")
-        case totalProb if totalProb > 1 =>
-          throw new IllegalArgumentException(s"$ns add up to more than 1")
-        case _ =>
+      val totalProbCandidate = probCandidates.sum
+      if (totalProbCandidate < 1 && complete) {
+        throw new IllegalArgumentException(s"$probCandidates do not add up to 1. There are uncontemplated cases")
+      }
+      if (totalProbCandidate > 1) {
+        throw new IllegalArgumentException(s"$probCandidates add up to more than 1")
       }
     }
 
@@ -54,15 +54,15 @@ object ProbabilityBag {
   }
 }
 
-class ProbabilityBag[T](
-  entries: Iterable[ProbabilityBag.Entry[T]],
-  complete: Boolean)
-    extends PartialFunction[T, Double] {
+class ProbabilityBag[T](entries: Iterable[ProbabilityBag.Entry[T]],
+                        complete: Boolean)
+  extends PartialFunction[T, Double] {
+
   import ProbabilityBag._
 
   def iterator: Iterator[T] = entries.iterator.map(_.value)
 
-  def isDefinedAt(value: T): Boolean = probOf(value).isDefined  
+  def isDefinedAt(value: T): Boolean = probOf(value).isDefined
 
   def apply(value: T): Double = entries.find(_.value == value).get.prob
 
@@ -73,7 +73,7 @@ class ProbabilityBag[T](
     if (probOf(value).isDefined)
       transform {
         case (v, _) if v == value => prob
-        case (_, prob)            => prob
+        case (_, prob) => prob
       }
     else {
       val newEntries = entries.map(_.valueAndProb).toBuffer += (value -> prob)

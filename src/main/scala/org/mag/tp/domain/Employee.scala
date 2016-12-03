@@ -2,7 +2,8 @@ package org.mag.tp.domain
 
 import akka.actor.{Actor, ActorRef, actorRef2Scala}
 import com.softwaremill.tagging.@@
-import org.mag.tp.domain.WorkArea._
+import org.mag.tp.domain.Employee.{Group, TimerFreq}
+import org.mag.tp.domain.WorkArea.{Loiter, Work}
 import org.mag.tp.domain.behaviour.RandomBehaviours
 import org.mag.tp.util.{PausableActor, ProbabilityBag, Scheduled}
 
@@ -10,11 +11,8 @@ import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
 
 object Employee {
-  // type annotations
   sealed trait TypeAnnotation
   trait TimerFreq extends TypeAnnotation
-  trait MemorySize extends TypeAnnotation
-  trait Permeability extends TypeAnnotation
 
   // messages
   case object Act
@@ -29,12 +27,18 @@ object Employee {
     lazy val opposite: Behaviour = WorkBehaviour
   }
 
-  private[domain] case class ActionMemory(action: WorkArea.Action, author: ActorRef)
+  case class Group(id: Int,
+                   targetSize: Int,
+                   permeability: Double,
+                   maxMemories: Option[Int],
+                   baseBehaviours: ProbabilityBag[Behaviour])
 
-  private[domain] class Memory(maxSize: Option[Int]) {
+  case class ActionMemory(action: WorkArea.Action, author: ActorRef)
+
+  class Memory(maxSize: Option[Int]) {
     val actionMemories = mutable.Queue[ActionMemory]()
     val memoryCountsByAuthor = mutable.Map[ActorRef, Int]().withDefaultValue(0)
-    val totalsByAction = mutable.Map[WorkArea.Action, Int]().withDefaultValue(0)
+    val totalsByActionClass = mutable.Map[Class[_ <: WorkArea.Action], Int]().withDefaultValue(0)
 
     def remember(action: WorkArea.Action, author: ActorRef): Unit = {
       if (isFull) {
@@ -42,7 +46,7 @@ object Employee {
       }
       actionMemories += ActionMemory(action, author)
       memoryCountsByAuthor(author) += 1
-      totalsByAction(action) += 1
+      totalsByActionClass(action.getClass) += 1
     }
 
     private[this] def isFull: Boolean = maxSize.isDefined && maxSize.get == actionMemories.size
@@ -55,7 +59,7 @@ object Employee {
         memoryCountsByAuthor -= forgottenAuthor
       }
 
-      totalsByAction(forgottenAction) -= 1
+      totalsByActionClass(forgottenAction.getClass) -= 1
     }
 
     def knownEmployees: Traversable[ActorRef] = memoryCountsByAuthor.keys
@@ -63,17 +67,17 @@ object Employee {
     def rememberedActions: Traversable[WorkArea.Action] = actionMemories map (_.action)
 
     def globalBehaviours: GlobalBehaviourObservations = {
-      val workingCount = totalsByAction(Work).toDouble
+      val workingCount = totalsByActionClass(classOf[Work]).toDouble
       new GlobalBehaviourObservations(workingProportion = workingCount / actionMemories.size)
     }
 
     override def toString: String =
       s"StatusPerception(actions=$actionMemories," +
-        " totalWork=${totalsByAction(Work)},"+
-        " totalLoitering=${totalsByAction(Loiter)}"
+        s" totalWork=${totalsByActionClass(classOf[Work])}," +
+        s" totalLoitering=${totalsByActionClass(classOf[Loiter])}"
   }
 
-  private[domain] class GlobalBehaviourObservations(val workingProportion: Double) {
+  class GlobalBehaviourObservations(val workingProportion: Double) {
     val loiteringProportion: Double = 1 - workingProportion
 
     val (majorityBehaviour: Behaviour, majorityProportion: Double) = if (workingProportion >= 0.5)
@@ -94,47 +98,49 @@ object Employee {
   }
 }
 
-class Employee(val maxMemories: Option[Int] @@ Employee.MemorySize,
-               val permeability: Double @@ Employee.Permeability,
-               private[domain] var baseBehaviours: ProbabilityBag[Employee.Behaviour],
-               val timerFreq: FiniteDuration @@ Employee.TimerFreq,
+class Employee(val group: Group,
+               val timerFreq: FiniteDuration @@ TimerFreq,
                val workArea: ActorRef @@ WorkArea)
   extends Actor with RandomBehaviours with Scheduled with PausableActor {
 
   import Employee._
   import WorkArea._
 
+  val memory = new Memory(group.maxMemories)
+  var _behaviours: ProbabilityBag[Behaviour] = group.baseBehaviours
+
   def timerMessage: Any = Act
+
   def randomBehaviourTrigger: Any = Act
 
-  private[domain] val memory = new Memory(maxMemories)
-
   def behaviours: Behaviours = {
-    def work() = { workArea ! Work }
-    def loiter() = { workArea ! Loiter }
+    def work() = { workArea ! Work(group) }
+    def loiter() = { workArea ! Loiter(group) }
 
-    if (!memory.knownEmployees.isEmpty) {
+    if (!memory.knownEmployees.isEmpty) { // XXX
       updateBehaviours()
     }
 
-    baseBehaviours map {
+    _behaviours map {
       case WorkBehaviour => work _
       case LoiterBehaviour => loiter _
     }
   }
 
   private[this] def updateBehaviours() = {
+    val permeability = group.permeability
+
     val globalBehaviours = memory.globalBehaviours
     val preferredBehaviour = if (permeability > 0)
       globalBehaviours.majorityBehaviour
     else
       globalBehaviours.minorityBehaviour
 
-    val ownProb = baseBehaviours(preferredBehaviour)
+    val ownProb = _behaviours(preferredBehaviour)
     val globalMainProb = globalBehaviours.majorityProportion
     val newPreferredBehaviourProb = permeability.abs * globalMainProb + (1 - permeability.abs) * ownProb
 
-    baseBehaviours = ProbabilityBag.complete(
+    _behaviours = ProbabilityBag.complete(
       preferredBehaviour -> newPreferredBehaviourProb,
       preferredBehaviour.opposite -> (1 - newPreferredBehaviourProb)
     )
