@@ -1,12 +1,12 @@
 var counters = null;
 
 function updateCounterData(data) {
-    if (data.type != 'workLog') { return; }
+    if (data.type != 'statsLog') { return; }
     counters.ticks++;
 
-    var total = data.workingCount + data.loiteringCount;
-    var workingPct = data.workingCount / total;
-    var loiteringPct = data.loiteringCount / total;
+    var total = data.stats.work.currentCount + data.stats.loiter.currentCount;
+    var workingPct = data.stats.work.currentCount / total;
+    var loiteringPct = data.stats.loiter.currentCount / total;
 
     var counterToUpdate = null;
     if (counters.limitReached != 'work' && workingPct >= counters.limit) {

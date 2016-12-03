@@ -29,7 +29,7 @@ object UIController {
       def getDouble(key: String, defaultValue: Double) = cleanParams.get(key).map(_.toDouble).getOrElse(defaultValue)
 
       val employeesMemory = getOptionalInt("employeesMemory")
-      val broadcastability = getInt("broadcastability", defaultValue = 5)
+      val visibility = getInt("visibility", defaultValue = 5)
 
       val backendTimerFreq = getDouble("backendTimerFreq", defaultValue = 0.2).seconds.taggedWith[Employee.TimerFreq]
       val loggingTimerFreq = getDouble("loggingTimerFreq", defaultValue = 0.7).seconds.taggedWith[StatsLogger.TimerFreq]

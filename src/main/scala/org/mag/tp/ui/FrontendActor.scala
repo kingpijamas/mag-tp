@@ -12,14 +12,16 @@ import spray.json._
 
 import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
+import scala.collection.immutable
+import org.mag.tp.ui.StatsLogger.StatsForAction
 
 object FrontendActor {
   type ActionStats = FullStats[Int]
 
   // FIXME: these two shouldn't be necessary!
-  implicit def fullStatsFormatter: JsonFormat[ActionStats] = jsonFormat7(FullStats.apply[Int])
-
-  implicit val workLogFormatter = jsonFormat5(WorkLog)
+  // implicit def fullStatsFormatter: JsonFormat[ActionStats] = jsonFormat7(FullStats.apply[Int])
+  implicit val StatsForActionFormatter = jsonFormat2(StatsForAction)
+  implicit val StatsLogFormatter = jsonFormat2(StatsLog)
 
   case class Connection(clientUuid: String)
 
@@ -28,13 +30,14 @@ object FrontendActor {
   case object StopSimulation
   case object SimulationStep
   // FIXME: type won't be necessary once json-shapeless comes into action
-  case class WorkLog(workingCount: Int,
-                     newWorkersCount: Int,
-                     // workStats: ActionStats,
-                     loiteringCount: Int,
-                     newLoiterersCount: Int,
-                     // loiteringStats: ActionStats,
-                     `type`: String = "workLog")
+  case class StatsLog(stats : immutable.Map[String, StatsForAction],
+                      `type`: String = "statsLog")
+  //  workingCount: Int,
+  //  newWorkersCount: Int,
+  //  // workStats: ActionStats,
+  //  loiteringCount: Int,
+  //  newLoiterersCount: Int,
+  //  // loiteringStats: ActionStats,
 }
 
 class FrontendActor(timerFreq: FiniteDuration @@ StatsLogger.TimerFreq,
@@ -56,7 +59,7 @@ class FrontendActor(timerFreq: FiniteDuration @@ StatsLogger.TimerFreq,
 
     case StartSimulation =>
       stopChildren()
-      createWorkLogger()
+      createstatsLogger()
       workArea = Some(createWorkArea())
 
     case Pause =>
@@ -73,18 +76,18 @@ class FrontendActor(timerFreq: FiniteDuration @@ StatsLogger.TimerFreq,
     case StopSimulation =>
       stopChildren()
 
-    case workLog: WorkLog =>
-      val msg = asMsg(workLog)
+    case statsLog: StatsLog =>
+      val msg = asMsg(statsLog)
       connectedClientUuids.foreach(sendTo(_, msg))
 
     case _ => // ignore unknown messages
   }
 
-  private[this] def createWorkLogger() = {
-    val workLogger = context.actorOf(statsLoggersFactory(self.taggedWith[FrontendActor]))
-    statsLoggers = Seq(workLogger)
-    workLogger ! Resume
-    workLogger
+  private[this] def createstatsLogger() = {
+    val statsLogger = context.actorOf(statsLoggersFactory(self.taggedWith[FrontendActor]))
+    statsLoggers = Seq(statsLogger)
+    statsLogger ! Resume
+    statsLogger
   }
 
   private[this] def createWorkArea() = {
@@ -104,7 +107,7 @@ class FrontendActor(timerFreq: FiniteDuration @@ StatsLogger.TimerFreq,
 
   private[this] def asMsg = {
     def jsonify: PartialFunction[Any, JsValue] = {
-      case workLog: WorkLog => (workLog: WorkLog).toJson
+      case statsLog: StatsLog => (statsLog: StatsLog).toJson
     }
 
     jsonify andThen (_.compactPrint)

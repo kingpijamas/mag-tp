@@ -1,10 +1,10 @@
 var lineChart = null;
 
 function updateLineChartData(data) {
-    if (data.type != 'workLog') { return; }
+    if (data.type != 'statsLog') { return; }
     lineChart.ticks++;
-    lineChart.data[0].values.push({x: lineChart.ticks, y: data.newWorkersCount});
-    lineChart.data[1].values.push({x: lineChart.ticks, y: data.newLoiterersCount});
+    lineChart.data[0].values.push({x: lineChart.ticks, y: data.stats.work.changedCount});
+    lineChart.data[1].values.push({x: lineChart.ticks, y: data.stats.loiter.changedCount});
     lineChart.chart.update(lineChart.data);
 }
 

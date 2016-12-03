@@ -1,9 +1,9 @@
 var pieChart = null;
 
 function updatePieChartData(data) {
-    if (data.type != 'workLog') { return; }
-    var total = data.workingCount + data.loiteringCount;
-    var workingPct = (data.workingCount / total) * 100;
+    if (data.type != 'statsLog') { return; }
+    var total = data.stats.work.currentCount + data.stats.loiter.currentCount;
+    var workingPct = (data.stats.work.currentCount / total) * 100;
     pieChart.data[0].value = workingPct;
     pieChart.data[1].value = 100 - workingPct;
     pieChart.chart.update(pieChart.data);

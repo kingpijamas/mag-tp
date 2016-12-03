@@ -1,10 +1,10 @@
 var areaChart = null;
 
 function updateAreaChartData(data) {
-    if (data.type != 'workLog') { return; }
+    if (data.type != 'statsLog') { return; }
     areaChart.ticks++;
-    areaChart.data[0].values.push({x: areaChart.ticks, y: data.workingCount});
-    areaChart.data[1].values.push({x: areaChart.ticks, y: data.loiteringCount});
+    areaChart.data[0].values.push({x: areaChart.ticks, y: data.stats.work.currentCount});
+    areaChart.data[1].values.push({x: areaChart.ticks, y: data.stats.loiter.currentCount});
     areaChart.chart.update(areaChart.data);
 }
 

@@ -20,6 +20,7 @@ function startAtmosphereConnection(url) {
     request.onMessage = function (response) {
         // console.log('request.onMessage: ' + response.responseBody)
         var responseBody = JSON.parse(response.responseBody);
+        console.log(response.responseBody);
         updatePieChartData(responseBody);
         updateAreaChartData(responseBody);
         updateLineChartData(responseBody);
