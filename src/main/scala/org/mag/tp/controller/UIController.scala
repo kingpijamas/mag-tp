@@ -8,10 +8,10 @@ import org.json4s.{DefaultFormats, Formats}
 import org.mag.tp.MagTpStack
 import org.mag.tp.domain.employee.{Employee, LoiterBehaviour, WorkBehaviour}
 import org.mag.tp.domain.{DomainModule, employee}
-import org.mag.tp.ui.FrontendActor.{Connection, SimulationStep, StartSimulation}
+import org.mag.tp.ui.FrontendActor.{ClientConnected, SimulationStep, StartSimulation}
 import org.mag.tp.ui.{FrontendModule, StatsLogger}
-import org.mag.tp.util.PausableActor.{Pause, Resume}
 import org.mag.tp.util.ProbabilityBag
+import org.mag.tp.util.actor.Pausing.{Pause, Resume}
 import org.scalatra.SessionSupport
 import org.scalatra.atmosphere.{AtmosphereClient, AtmosphereSupport, Disconnected, Error, JsonMessage}
 import org.scalatra.json.{JValueResult, JacksonJsonSupport}
@@ -34,7 +34,7 @@ object UIController {
       val visibility = getInt("visibility", defaultValue = 5)
 
       val backendTimerFreq = getDouble("backendTimerFreq", defaultValue = 0.2).seconds.taggedWith[Employee]
-      val loggingTimerFreq = getDouble("loggingTimerFreq", defaultValue = 0.7).seconds.taggedWith[StatsLogger.TimerFreq]
+      val loggingTimerFreq = getDouble("loggingTimerFreq", defaultValue = 0.7).seconds.taggedWith[StatsLogger]
 
       val workingGroup = employee.Group(
         id = "workers",
@@ -61,7 +61,7 @@ object UIController {
             val employeeGroups: immutable.Seq[employee.Group],
             val employeeTimerFreq: FiniteDuration @@ Employee,
             val visibility: Int,
-            val statsLoggerTimerFreq: FiniteDuration @@ StatsLogger.TimerFreq)
+            val statsLoggerTimerFreq: FiniteDuration @@ StatsLogger)
     extends DomainModule with FrontendModule
 }
 
@@ -110,7 +110,7 @@ class UIController(system: ActorSystem) extends MagTpStack
     frontendActor.foreach(system.stop(_))
     val _frontendActor = currentRun.get.createFrontendActor()
     frontendActor = Some(_frontendActor)
-    clientUuids.foreach(_frontendActor ! Connection(_))
+    clientUuids.foreach(_frontendActor ! ClientConnected(_))
   }
 
   post("/pause") {
@@ -133,7 +133,7 @@ class UIController(system: ActorSystem) extends MagTpStack
 
         case JsonMessage(_) =>
           clientUuids += uuid
-          frontendActor.foreach(_ ! Connection(uuid))
+          frontendActor.foreach(_ ! ClientConnected(uuid))
 
         case msg: Any => // log unhandled messages
           println(msg)

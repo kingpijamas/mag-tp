@@ -1,9 +1,9 @@
-package org.mag.tp.util
+package org.mag.tp.util.actor
 
 import akka.actor.Actor
 import akka.routing.Router
 
-trait PartiallyBroadcastingActor extends Actor {
+trait PartialBroadcasts extends Actor {
   def visibility: Int
   def partiallyBroadcastables: Router
 

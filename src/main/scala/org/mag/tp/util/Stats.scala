@@ -5,21 +5,19 @@ import scala.math.sqrt
 object Stats {
   sealed trait StatsType
 
-  private case class PartialStats[N: Numeric](
-    min: Option[N] = None,
-    max: Option[N] = None,
-    mean: Option[Double] = None,
-    sum: N,
-    count: Long) extends StatsType
+  private case class PartialStats[N: Numeric](min: Option[N] = None,
+                                              max: Option[N] = None,
+                                              mean: Option[Double] = None,
+                                              sum: N,
+                                              count: Long) extends StatsType
 
-  case class FullStats[N: Numeric](
-    min: Option[N] = None,
-    max: Option[N] = None,
-    mean: Option[Double] = None,
-    variance: Option[Double] = None,
-    stdDev: Option[Double] = None,
-    sum: N,
-    count: Long) extends StatsType
+  case class FullStats[N: Numeric](min: Option[N] = None,
+                                   max: Option[N] = None,
+                                   mean: Option[Double] = None,
+                                   variance: Option[Double] = None,
+                                   stdDev: Option[Double] = None,
+                                   sum: N,
+                                   count: Long) extends StatsType
 
   def full[N: Numeric](values: Traversable[N]): FullStats[N] =
     partial(values) match {

@@ -2,8 +2,6 @@ import javax.servlet.ServletContext
 
 import akka.actor.ActorSystem
 import org.mag.tp.controller.ControllersModule
-import org.mag.tp.domain.DomainModule
-import org.mag.tp.ui.FrontendModule
 import org.scalatra.LifeCycle
 
 class ScalatraBootstrap extends LifeCycle with ControllersModule {

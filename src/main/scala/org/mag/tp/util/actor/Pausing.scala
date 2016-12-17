@@ -1,14 +1,14 @@
-package org.mag.tp.util
+package org.mag.tp.util.actor
 
 import akka.actor.Actor
+import org.mag.tp.util.actor.Pausing.{Pause, Resume}
 
-object PausableActor {
+object Pausing {
   case object Pause
   case object Resume
 }
 
-trait PausableActor extends Actor {
-  import PausableActor._
+trait Pausing extends Actor {
   import context._
 
   def paused: Receive = {

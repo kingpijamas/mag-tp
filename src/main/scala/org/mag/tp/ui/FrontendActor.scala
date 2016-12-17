@@ -1,12 +1,13 @@
 package org.mag.tp.ui
 
 import akka.actor.{Actor, ActorRef, Props}
-import com.softwaremill.tagging._
+import com.softwaremill.tagging.{@@, Tagger}
 import org.atmosphere.cpr.AtmosphereResourceFactory
 import org.mag.tp.domain.WorkArea
+import org.mag.tp.ui.FrontendActor.{ClientConnected, SimulationStep, StartSimulation, StatsLog, StopSimulation}
 import org.mag.tp.ui.StatsLogger.GroupActionStats
-import org.mag.tp.util.PausableActor.{Pause, Resume}
 import org.mag.tp.util.Stats.FullStats
+import org.mag.tp.util.actor.Pausing.{Pause, Resume}
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
@@ -21,7 +22,7 @@ object FrontendActor {
   implicit val GroupActionStatsFormatter = jsonFormat2(GroupActionStats)
   implicit val StatsLogFormatter = jsonFormat2(StatsLog)
 
-  case class Connection(clientUuid: String)
+  case class ClientConnected(clientUuid: String)
 
   // messages
   case object StartSimulation
@@ -38,11 +39,10 @@ object FrontendActor {
   //  // loiteringStats: ActionStats,
 }
 
-class FrontendActor(timerFreq: FiniteDuration @@ StatsLogger.TimerFreq,
+class FrontendActor(timerFreq: FiniteDuration @@ StatsLogger,
                     workAreaPropsFactory: (Traversable[ActorRef] => Props @@ WorkArea),
                     statsLoggersFactory: ((ActorRef @@ FrontendActor) => (Props @@ StatsLogger)))
   extends Actor {
-  import FrontendActor._
   import context._
 
   var connectedClientUuids = mutable.Buffer[String]()
@@ -51,7 +51,7 @@ class FrontendActor(timerFreq: FiniteDuration @@ StatsLogger.TimerFreq,
   var stopsCount = 0
 
   def receive: Receive = {
-    case Connection(clientUuid: String) =>
+    case ClientConnected(clientUuid: String) =>
       connectedClientUuids += clientUuid
       println(s"connected clients: $connectedClientUuids")
 

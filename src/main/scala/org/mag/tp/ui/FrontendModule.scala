@@ -13,7 +13,7 @@ trait FrontendModule {
 
   def system: ActorSystem
 
-  def statsLoggerTimerFreq: FiniteDuration @@ StatsLogger.TimerFreq
+  def statsLoggerTimerFreq: FiniteDuration @@ StatsLogger
 
   def statsLoggerPropsFactory(frontendActor: ActorRef @@ FrontendActor): Props @@ StatsLogger =
     Props(wire[StatsLogger]).taggedWith[StatsLogger]

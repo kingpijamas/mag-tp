@@ -4,8 +4,8 @@ import akka.actor.{Actor, ActorRef, Props, Terminated}
 import akka.routing.{ActorRefRoutee, RandomRoutingLogic, Router}
 import com.softwaremill.tagging.{@@, Tagger}
 import org.mag.tp.domain.employee.{Employee, Group}
-import org.mag.tp.util.PausableActor.{Pause, Resume}
-import org.mag.tp.util.{MandatoryBroadcastingActor, PartiallyBroadcastingActor, PausableActor}
+import org.mag.tp.util.actor.Pausing.{Pause, Resume}
+import org.mag.tp.util.actor.{MandatoryBroadcasts, PartialBroadcasts, Pausing}
 
 import scala.collection.{immutable, mutable}
 
@@ -25,7 +25,7 @@ class WorkArea(val groups: immutable.Seq[Group],
                val employeePropsFactory: (ActorRef @@ WorkArea, Group) => (Props @@ Employee),
                // FIXME: consider crashes!
                val mandatoryBroadcastables: Traversable[ActorRef])
-  extends Actor with PartiallyBroadcastingActor with MandatoryBroadcastingActor with PausableActor {
+  extends Actor with PartialBroadcasts with MandatoryBroadcasts with Pausing {
 
   var nextId = 0
   var employeesPerGroup = mutable.Map(groups.map(_ -> mutable.Set[ActorRef]()): _*)

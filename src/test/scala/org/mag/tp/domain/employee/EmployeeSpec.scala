@@ -2,11 +2,11 @@ package org.mag.tp.domain.employee
 
 import akka.actor.Props
 import akka.testkit.{TestActorRef, TestProbe}
-import com.softwaremill.macwire._
-import com.softwaremill.tagging._
+import com.softwaremill.macwire.wire
+import com.softwaremill.tagging.{@@, Tagger}
 import org.mag.tp.domain.WorkArea
-import org.mag.tp.domain.WorkArea._
-import org.mag.tp.domain.employee.Employee._
+import org.mag.tp.domain.WorkArea.{Loiter, Work}
+import org.mag.tp.domain.employee.Employee.Act
 import org.mag.tp.util.ProbabilityBag
 import org.mag.tp.{ActorSpec, UnitSpec}
 

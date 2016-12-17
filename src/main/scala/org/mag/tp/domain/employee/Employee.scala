@@ -2,26 +2,23 @@ package org.mag.tp.domain.employee
 
 import akka.actor.{Actor, ActorRef, actorRef2Scala}
 import com.softwaremill.tagging.@@
-import org.mag.tp.domain.WorkArea
-import org.mag.tp.domain.behaviour.RandomBehaviours
-import org.mag.tp.util.{PausableActor, ProbabilityBag, Scheduled}
+import org.mag.tp.domain.WorkArea.{Loiter, Work}
+import org.mag.tp.domain.employee.Employee.Act
+import org.mag.tp.domain.{RandomBehaviours, WorkArea}
+import org.mag.tp.util.ProbabilityBag
+import org.mag.tp.util.actor.{Pausing, Scheduling}
 
 import scala.concurrent.duration.FiniteDuration
 
 object Employee {
   // messages
   case object Act
-
-  case class ActionMemory(action: WorkArea.Action, author: ActorRef)
 }
 
 class Employee(val group: Group,
                val timerFreq: FiniteDuration @@ Employee,
                val workArea: ActorRef @@ WorkArea)
-  extends Actor with RandomBehaviours with Scheduled with PausableActor {
-
-  import Employee._
-  import WorkArea._
+  extends Actor with RandomBehaviours with Scheduling with Pausing {
 
   val memory = new Memory(group.maxMemories)
   var _behaviours: ProbabilityBag[Behaviour] = group.baseBehaviours
@@ -54,7 +51,10 @@ class Employee(val group: Group,
     val permeability = group.permeability
 
     val observations = memory.globalObservations
-    val preferredBehaviour = if (permeability > 0) observations.majorityBehaviour else observations.minorityBehaviour
+    val preferredBehaviour = if (permeability > 0)
+      observations.majorityBehaviour
+    else
+      observations.minorityBehaviour
 
     val ownProb = _behaviours(preferredBehaviour)
     val globalMainProb = observations.majorityProportion
@@ -67,6 +67,6 @@ class Employee(val group: Group,
   }
 
   def receive: Receive = respectPauses orElse actRandomly orElse {
-    case action: Action => memory.remember(action, sender)
+    case action: WorkArea.Action => memory.remember(action, sender)
   }
 }

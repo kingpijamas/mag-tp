@@ -1,6 +1,7 @@
 package org.mag.tp.util
 
 import breeze.linalg.{DenseVector, accumulate}
+import org.mag.tp.util.ProbabilityBag.Entry
 
 import scala.reflect.ClassTag
 import scala.util.Random
@@ -58,8 +59,6 @@ class ProbabilityBag[T](entries: Iterable[ProbabilityBag.Entry[T]],
                         complete: Boolean)
   extends PartialFunction[T, Double] {
 
-  import ProbabilityBag._
-
   def iterator: Iterator[T] = entries.iterator.map(_.value)
 
   def isDefinedAt(value: T): Boolean = probOf(value).isDefined
@@ -104,5 +103,5 @@ class ProbabilityBag[T](entries: Iterable[ProbabilityBag.Entry[T]],
     }
   }
 
-  override def toString: String = s"ProbabilityBag(\n${entries.map(_.valueAndProb)})"
+  override def toString: String = s"ProbabilityBag(${entries.map(_.valueAndProb)})"
 }

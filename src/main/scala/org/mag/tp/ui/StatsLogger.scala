@@ -2,19 +2,17 @@ package org.mag.tp.ui
 
 import akka.actor.{Actor, ActorRef, actorRef2Scala}
 import com.softwaremill.tagging.@@
-import org.mag.tp.domain.employee.Employee
-import org.mag.tp.domain.employee
-import org.mag.tp.domain.WorkArea
-import org.mag.tp.util.{PausableActor, Scheduled}
+import org.mag.tp.domain.WorkArea.{Action, Loiter, Work}
+import org.mag.tp.domain.{WorkArea, employee}
+import org.mag.tp.ui.FrontendActor.StatsLog
+import org.mag.tp.ui.StatsLogger.{FlushLogSummary, GroupActionStats}
+import org.mag.tp.util.actor.{Pausing, Scheduling}
 
 import scala.collection.{immutable, mutable}
 import scala.concurrent.duration.FiniteDuration
 import scala.reflect.ClassTag
 
 object StatsLogger {
-  sealed trait TypeAnnotation
-  trait TimerFreq extends TypeAnnotation
-
   case object FlushLogSummary
 
   //  val ActionsToLog = immutable.Map(
@@ -26,12 +24,9 @@ object StatsLogger {
 }
 
 class StatsLogger(val employeeGroups: immutable.Seq[employee.Group],
-                  val timerFreq: FiniteDuration @@ StatsLogger.TimerFreq,
+                  val timerFreq: FiniteDuration @@ StatsLogger,
                   val frontend: ActorRef @@ FrontendActor)
-  extends Actor with Scheduled with PausableActor {
-  import FrontendActor._
-  import StatsLogger._
-  import WorkArea._
+  extends Actor with Scheduling with Pausing {
   import context._
 
   def timerMessage: Any = FlushLogSummary
