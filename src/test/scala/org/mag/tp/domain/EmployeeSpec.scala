@@ -25,7 +25,7 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
       LoiterBehaviour -> (1 - originalWorkingProb)
     )
     val group = Group(
-      id = 0,
+      id = "testGroup",
       targetSize = 100,
       permeability = permeability,
       maxMemories = maxMemories,
@@ -43,12 +43,12 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
     def loiteringProbability = subject._behaviours(LoiterBehaviour)
 
     def influenceToWork(times: Int = 1): Unit = { // FIXME
-      (0 until times).foreach { _ => subjectRef ! Work(null) }
+      (0 until times).foreach { _ => subjectRef ! Work(null, null) }
       subjectRef ! Act
     }
 
     def influenceToLoiter(times: Int = 1): Unit = { // FIXME
-      (0 until times).foreach { _ => subjectRef ! Loiter(null) }
+      (0 until times).foreach { _ => subjectRef ! Loiter(null, null) }
       subjectRef ! Act
     }
   }
@@ -56,7 +56,7 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
   "An Employee" when {
     "witnessing an Action" should {
       "remember it" in new EmployeeTest {
-        val action = Work(null) // FIXME
+        val action = Work(null, null) // FIXME
         subjectRef ! action
         subject.memory.rememberedActions.map(_.getClass) should contain(classOf[Work])
         subject.memory.totalsByActionClass(classOf[Work]) should be(1)

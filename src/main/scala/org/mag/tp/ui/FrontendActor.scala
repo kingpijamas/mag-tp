@@ -3,24 +3,22 @@ package org.mag.tp.ui
 import akka.actor.{Actor, ActorRef, Props}
 import com.softwaremill.tagging._
 import org.atmosphere.cpr.AtmosphereResourceFactory
-import org.mag.tp.domain.WorkArea
-import org.mag.tp.util.PausableActor
+import org.mag.tp.domain.{Employee, WorkArea}
+import org.mag.tp.ui.StatsLogger.GroupActionStats
 import org.mag.tp.util.PausableActor.{Pause, Resume}
 import org.mag.tp.util.Stats.FullStats
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
-import scala.collection.mutable
+import scala.collection.{immutable, mutable}
 import scala.concurrent.duration.FiniteDuration
-import scala.collection.immutable
-import org.mag.tp.ui.StatsLogger.StatsForAction
 
 object FrontendActor {
   type ActionStats = FullStats[Int]
 
   // FIXME: these two shouldn't be necessary!
   // implicit def fullStatsFormatter: JsonFormat[ActionStats] = jsonFormat7(FullStats.apply[Int])
-  implicit val StatsForActionFormatter = jsonFormat2(StatsForAction)
+  implicit val GroupActionStatsFormatter = jsonFormat2(GroupActionStats)
   implicit val StatsLogFormatter = jsonFormat2(StatsLog)
 
   case class Connection(clientUuid: String)
@@ -30,7 +28,7 @@ object FrontendActor {
   case object StopSimulation
   case object SimulationStep
   // FIXME: type won't be necessary once json-shapeless comes into action
-  case class StatsLog(stats : immutable.Map[String, StatsForAction],
+  case class StatsLog(stats: immutable.Map[String, immutable.Map[String, GroupActionStats]],
                       `type`: String = "statsLog")
   //  workingCount: Int,
   //  newWorkersCount: Int,
@@ -70,15 +68,19 @@ class FrontendActor(timerFreq: FiniteDuration @@ StatsLogger.TimerFreq,
 
     case SimulationStep =>
       pauseChildren()
-      context.system.scheduler.scheduleOnce(timerFreq) { resumeChildren() }
-      context.system.scheduler.scheduleOnce(timerFreq * 2) { pauseChildren() }
+      context.system.scheduler.scheduleOnce(timerFreq) {
+        resumeChildren()
+      }
+      context.system.scheduler.scheduleOnce(timerFreq * 2) {
+        pauseChildren()
+      }
 
     case StopSimulation =>
       stopChildren()
 
     case statsLog: StatsLog =>
-      val msg = asMsg(statsLog)
-      connectedClientUuids.foreach(sendTo(_, msg))
+      val statsMsg = asMsg(statsLog)
+      connectedClientUuids.foreach(sendTo(_, statsMsg))
 
     case _ => // ignore unknown messages
   }

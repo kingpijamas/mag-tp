@@ -8,7 +8,9 @@ import org.mag.tp.domain.DomainModule
 import scala.concurrent.duration.FiniteDuration
 import scala.language.postfixOps
 
-trait FrontendModule extends DomainModule {
+trait FrontendModule {
+  self: DomainModule =>
+
   def system: ActorSystem
 
   def statsLoggerTimerFreq: FiniteDuration @@ StatsLogger.TimerFreq

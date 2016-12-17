@@ -11,10 +11,11 @@ import scala.collection.{immutable, mutable}
 object WorkArea {
   // messages
   sealed trait Action {
+    def employee: ActorRef
     def group: Employee.Group
   }
-  case class Work(group: Employee.Group) extends Action
-  case class Loiter(group: Employee.Group) extends Action
+  case class Work(employee: ActorRef, group: Employee.Group) extends Action
+  case class Loiter(employee: ActorRef, group: Employee.Group) extends Action
 }
 
 class WorkArea(val groups: immutable.Seq[Employee.Group],

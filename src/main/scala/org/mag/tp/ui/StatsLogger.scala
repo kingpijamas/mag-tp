@@ -2,7 +2,7 @@ package org.mag.tp.ui
 
 import akka.actor.{Actor, ActorRef, actorRef2Scala}
 import com.softwaremill.tagging.@@
-import org.mag.tp.domain.WorkArea
+import org.mag.tp.domain.{Employee, WorkArea}
 import org.mag.tp.util.{PausableActor, Scheduled}
 
 import scala.collection.{immutable, mutable}
@@ -20,10 +20,11 @@ object StatsLogger {
   //    "loiter" -> classOf[Loiter]
   //  )
 
-  case class StatsForAction(currentCount: Int, changedCount: Int)
+  case class GroupActionStats(currentCount: Int, changedCount: Int)
 }
 
-class StatsLogger(val timerFreq: FiniteDuration @@ StatsLogger.TimerFreq,
+class StatsLogger(val employeeGroups: immutable.Seq[Employee.Group],
+                  val timerFreq: FiniteDuration @@ StatsLogger.TimerFreq,
                   val frontend: ActorRef @@ FrontendActor)
   extends Actor with Scheduled with PausableActor {
   import FrontendActor._
@@ -33,8 +34,11 @@ class StatsLogger(val timerFreq: FiniteDuration @@ StatsLogger.TimerFreq,
 
   def timerMessage: Any = FlushLogSummary
 
-  var prevActionsByActor = mutable.Map[ActorRef, mutable.Buffer[WorkArea.Action]]()
-  var actionsByActor = mutable.Map[ActorRef, mutable.Buffer[WorkArea.Action]]()
+  var prevActionsByGroup = mutable.Map[Employee.Group, mutable.Buffer[WorkArea.Action]]()
+  var actionsByGroup = mutable.Map[Employee.Group, mutable.Buffer[WorkArea.Action]]()
+
+  var actionsByEmployee = mutable.Map[ActorRef, mutable.Buffer[WorkArea.Action]]()
+  var prevActionsByEmployee = mutable.Map[ActorRef, mutable.Buffer[WorkArea.Action]]()
 
   def receive: Receive = paused
 
@@ -44,9 +48,11 @@ class StatsLogger(val timerFreq: FiniteDuration @@ StatsLogger.TimerFreq,
 
   def loggingEnabled: Receive = respectPauses orElse {
     case action: WorkArea.Action =>
-      val knownActions = actionsByActor.getOrElse(sender, mutable.Buffer())
-      knownActions += action
-      actionsByActor(sender) = knownActions
+      val knownEmployeeActions = actionsByEmployee.getOrElseUpdate(sender, mutable.Buffer())
+      knownEmployeeActions += action
+
+      val knownGroupActions = actionsByGroup.getOrElseUpdate(action.group, mutable.Buffer())
+      knownGroupActions += action
 
     case FlushLogSummary =>
       //      val actionStats = ActionsToLog mapValues { actionClass =>
@@ -55,27 +61,41 @@ class StatsLogger(val timerFreq: FiniteDuration @@ StatsLogger.TimerFreq,
       //          changedCount = changedActorsCountFor(actionClass)
       //        )
       //      }
+
       val actionStats = immutable.Map(
-        "work" -> StatsForAction(currentCount = actorsCountFor[Work], changedCount = changedActorsCountFor[Work]),
-        "loiter" -> StatsForAction(currentCount = actorsCountFor[Loiter], changedCount = changedActorsCountFor[Loiter])
+        "work" -> immutable.Map(statsByGroupId[Work].toSeq: _*),
+        "loiter" -> immutable.Map(statsByGroupId[Loiter].toSeq: _*)
       )
-      prevActionsByActor = actionsByActor
-      actionsByActor = mutable.Map[ActorRef, mutable.Buffer[WorkArea.Action]]()
+
+      prevActionsByEmployee = actionsByEmployee
+      actionsByEmployee = mutable.Map()
+      prevActionsByGroup = actionsByGroup
+      actionsByGroup = mutable.Map()
+
       frontend ! StatsLog(actionStats)
 
     case _ => // ignore unknown messages
   }
 
-  private[this] def actorsCountFor[A: ClassTag]: Int =
-    actionsByActor.values count isDominant[A]
+  private[this] def statsByGroupId[A: ClassTag]: immutable.Map[String, GroupActionStats] = {
+    val relevantActionsByGroup = actionsByGroup filter { case (_, actions) => isDominant[A](actions) }
 
-  private[this] def changedActorsCountFor[A: ClassTag]: Int = actionsByActor count {
-    case (actor, actions) if (isDominant[A](actions)) =>
-      prevActionsByActor.get(actor) match {
-        case Some(oldActions) => !isDominant[A](oldActions)
-        case _ => false
+    val stats = relevantActionsByGroup map { case (group, actions) =>
+      val relevantEmployees = actions map (_.employee)
+      val changedRelevantActorsCount = relevantEmployees count {
+        prevActionsByEmployee.get(_) match {
+          case Some(oldActions) => !isDominant[A](oldActions)
+          case _ => false
+        }
       }
-    case _ => false
+      val actionStats = GroupActionStats(
+        currentCount = relevantEmployees.size,
+        changedCount = changedRelevantActorsCount
+      )
+      group.id -> actionStats
+    }
+
+    immutable.Map(stats.toSeq: _*)
   }
 
   private[this] def isDominant[A: ClassTag](actions: Traversable[Action]): Boolean = {

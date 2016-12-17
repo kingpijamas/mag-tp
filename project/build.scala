@@ -8,14 +8,14 @@ import ScalateKeys._
 
 
 object MagTpBuild extends Build {
-  val Organization = "org.mag"
-  val Name = "MAG-TP"
-  val Version = "0.1.0-SNAPSHOT"
-  val ScalaVersion = "2.11.8"
-  val ScalatraVersion = "2.4.1"
-  val JettyVersion = "9.2.15.v20160210"
-  val AkkaVersion = "2.4.10"
-  val MacwireVersion = "2.2.5"
+  val Organization     = "org.mag"
+  val Name             = "MAG-TP"
+  val Version          = "0.1.0-SNAPSHOT"
+  val ScalaVersion     = "2.11.8"
+  val ScalatraVersion  = "2.4.1"
+  val JettyVersion     = "9.2.15.v20160210"
+  val AkkaVersion      = "2.4.10"
+  val MacwireVersion   = "2.2.5"
   val ScalatestVersion = "3.0.1"
 
   lazy val project = Project (
@@ -37,7 +37,7 @@ object MagTpBuild extends Build {
         "com.softwaremill.macwire"    %% "util"                         % MacwireVersion,
         "com.softwaremill.macwire"    %% "proxy"                        % MacwireVersion,
         // math & statistics
-        "org.scalanlp"                %% "breeze"                       % "0.12",
+        "org.scalanlp"                %% "breeze"                       % "0.12", // FIXME: kill, unused!
         // Web
         "org.scalatra"                %% "scalatra"                     % ScalatraVersion,
         "org.scalatra"                %% "scalatra-scalate"             % ScalatraVersion,

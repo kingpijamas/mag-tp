@@ -3,8 +3,12 @@ var lineChart = null;
 function updateLineChartData(data) {
     if (data.type != 'statsLog') { return; }
     lineChart.ticks++;
-    lineChart.data[0].values.push({x: lineChart.ticks, y: data.stats.work.changedCount});
-    lineChart.data[1].values.push({x: lineChart.ticks, y: data.stats.loiter.changedCount});
+
+    const changedToWorkCount = accumulateAttributeInChildren(data.stats.work, 'changedCount', 0);
+    const changedToLoiteringCount = accumulateAttributeInChildren(data.stats.loiter, 'changedCount', 0);
+
+    lineChart.data[0].values.push({x: lineChart.ticks, y: changedToWorkCount});
+    lineChart.data[1].values.push({x: lineChart.ticks, y: changedToLoiteringCount});
     lineChart.chart.update(lineChart.data);
 }
 

@@ -27,7 +27,7 @@ object Employee {
     lazy val opposite: Behaviour = WorkBehaviour
   }
 
-  case class Group(id: Int,
+  case class Group(id: String,
                    targetSize: Int,
                    permeability: Double,
                    maxMemories: Option[Int],
@@ -114,8 +114,8 @@ class Employee(val group: Group,
   def randomBehaviourTrigger: Any = Act
 
   def behaviours: Behaviours = {
-    def work() = { workArea ! Work(group) }
-    def loiter() = { workArea ! Loiter(group) }
+    def work() = { workArea ! Work(self, group) }
+    def loiter() = { workArea ! Loiter(self, group) }
 
     if (!memory.knownEmployees.isEmpty) { // XXX
       updateBehaviours()

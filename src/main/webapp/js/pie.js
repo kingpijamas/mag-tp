@@ -2,8 +2,12 @@ var pieChart = null;
 
 function updatePieChartData(data) {
     if (data.type != 'statsLog') { return; }
-    var total = data.stats.work.currentCount + data.stats.loiter.currentCount;
-    var workingPct = (data.stats.work.currentCount / total) * 100;
+
+    const workersCount = accumulateAttributeInChildren(data.stats.work, 'currentCount', 0);
+    const loiterersCount = accumulateAttributeInChildren(data.stats.loiter, 'currentCount', 0);
+    const total = workersCount + loiterersCount;
+    const workingPct = (workersCount / total) * 100;
+
     pieChart.data[0].value = workingPct;
     pieChart.data[1].value = 100 - workingPct;
     pieChart.chart.update(pieChart.data);

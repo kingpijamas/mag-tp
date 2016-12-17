@@ -35,14 +35,14 @@ object UIController {
       val loggingTimerFreq = getDouble("loggingTimerFreq", defaultValue = 0.7).seconds.taggedWith[StatsLogger.TimerFreq]
 
       val workingGroup = Employee.Group(
-        id = 1,
+        id = "workers",
         targetSize = getInt("workersCount", defaultValue = 500),
         permeability = getDouble("workersPermeability", defaultValue = 0.5),
         maxMemories = employeesMemory,
         baseBehaviours = ProbabilityBag.complete[Employee.Behaviour](WorkBehaviour -> 1, LoiterBehaviour -> 0)
       )
       val loiteringGroup = Employee.Group(
-        id = 2,
+        id = "loiterers",
         targetSize = getInt("loiterersCount", defaultValue = 500),
         permeability = getDouble("loiterersPermeability", defaultValue = 0),
         maxMemories = employeesMemory,

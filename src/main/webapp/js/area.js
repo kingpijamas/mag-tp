@@ -3,8 +3,12 @@ var areaChart = null;
 function updateAreaChartData(data) {
     if (data.type != 'statsLog') { return; }
     areaChart.ticks++;
-    areaChart.data[0].values.push({x: areaChart.ticks, y: data.stats.work.currentCount});
-    areaChart.data[1].values.push({x: areaChart.ticks, y: data.stats.loiter.currentCount});
+
+    const workersCount = accumulateAttributeInChildren(data.stats.work, 'currentCount', 0);
+    const loiterersCount = accumulateAttributeInChildren(data.stats.loiter, 'currentCount', 0);
+
+    areaChart.data[0].values.push({x: areaChart.ticks, y: workersCount});
+    areaChart.data[1].values.push({x: areaChart.ticks, y: loiterersCount});
     areaChart.chart.update(areaChart.data);
 }
 

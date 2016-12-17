@@ -4,11 +4,13 @@ function updateCounterData(data) {
     if (data.type != 'statsLog') { return; }
     counters.ticks++;
 
-    var total = data.stats.work.currentCount + data.stats.loiter.currentCount;
-    var workingPct = data.stats.work.currentCount / total;
-    var loiteringPct = data.stats.loiter.currentCount / total;
+    const workersCount = accumulateAttributeInChildren(data.stats.work, 'currentCount', 0);
+    const loiterersCount = accumulateAttributeInChildren(data.stats.loiter, 'currentCount', 0);
+    const total = workersCount + loiterersCount;
+    const workingPct = workersCount / total;
+    const loiteringPct = loiterersCount / total;
 
-    var counterToUpdate = null;
+    let counterToUpdate = null;
     if (counters.limitReached != 'work' && workingPct >= counters.limit) {
         counters.limitReached = 'work';
         counterToUpdate = counters.work;
