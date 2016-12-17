@@ -3,11 +3,11 @@ package org.mag.tp.controller
 import akka.actor.Actor._
 import akka.actor.{ActorRef, ActorSystem}
 import com.softwaremill.macwire.wire
-import com.softwaremill.tagging._
+import com.softwaremill.tagging.{@@, Tagger}
 import org.json4s.{DefaultFormats, Formats}
 import org.mag.tp.MagTpStack
-import org.mag.tp.domain.Employee.{LoiterBehaviour, WorkBehaviour}
-import org.mag.tp.domain.{DomainModule, Employee}
+import org.mag.tp.domain.employee.{Employee, LoiterBehaviour, WorkBehaviour}
+import org.mag.tp.domain.{DomainModule, employee}
 import org.mag.tp.ui.FrontendActor.{Connection, SimulationStep, StartSimulation}
 import org.mag.tp.ui.{FrontendModule, StatsLogger}
 import org.mag.tp.util.PausableActor.{Pause, Resume}
@@ -25,28 +25,30 @@ object UIController {
       val cleanParams = params filter { case (_, value) => !value.isEmpty }
 
       def getOptionalInt(key: String) = cleanParams.get(key).map(_.toInt)
+
       def getInt(key: String, defaultValue: Int) = getOptionalInt(key).getOrElse(defaultValue)
+
       def getDouble(key: String, defaultValue: Double) = cleanParams.get(key).map(_.toDouble).getOrElse(defaultValue)
 
       val employeesMemory = getOptionalInt("employeesMemory")
       val visibility = getInt("visibility", defaultValue = 5)
 
-      val backendTimerFreq = getDouble("backendTimerFreq", defaultValue = 0.2).seconds.taggedWith[Employee.TimerFreq]
+      val backendTimerFreq = getDouble("backendTimerFreq", defaultValue = 0.2).seconds.taggedWith[Employee]
       val loggingTimerFreq = getDouble("loggingTimerFreq", defaultValue = 0.7).seconds.taggedWith[StatsLogger.TimerFreq]
 
-      val workingGroup = Employee.Group(
+      val workingGroup = employee.Group(
         id = "workers",
         targetSize = getInt("workersCount", defaultValue = 500),
         permeability = getDouble("workersPermeability", defaultValue = 0.5),
         maxMemories = employeesMemory,
-        baseBehaviours = ProbabilityBag.complete[Employee.Behaviour](WorkBehaviour -> 1, LoiterBehaviour -> 0)
+        baseBehaviours = ProbabilityBag.complete[employee.Behaviour](WorkBehaviour -> 1, LoiterBehaviour -> 0)
       )
-      val loiteringGroup = Employee.Group(
+      val loiteringGroup = employee.Group(
         id = "loiterers",
         targetSize = getInt("loiterersCount", defaultValue = 500),
         permeability = getDouble("loiterersPermeability", defaultValue = 0),
         maxMemories = employeesMemory,
-        baseBehaviours = ProbabilityBag.complete[Employee.Behaviour](WorkBehaviour -> 0, LoiterBehaviour -> 1)
+        baseBehaviours = ProbabilityBag.complete[employee.Behaviour](WorkBehaviour -> 0, LoiterBehaviour -> 1)
       )
 
       val groups = immutable.Seq(workingGroup, loiteringGroup)
@@ -56,8 +58,8 @@ object UIController {
   }
 
   class Run(val system: ActorSystem,
-            val employeeGroups: immutable.Seq[Employee.Group],
-            val employeeTimerFreq: FiniteDuration @@ Employee.TimerFreq,
+            val employeeGroups: immutable.Seq[employee.Group],
+            val employeeTimerFreq: FiniteDuration @@ Employee,
             val visibility: Int,
             val statsLoggerTimerFreq: FiniteDuration @@ StatsLogger.TimerFreq)
     extends DomainModule with FrontendModule

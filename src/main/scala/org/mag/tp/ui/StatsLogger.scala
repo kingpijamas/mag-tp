@@ -2,7 +2,9 @@ package org.mag.tp.ui
 
 import akka.actor.{Actor, ActorRef, actorRef2Scala}
 import com.softwaremill.tagging.@@
-import org.mag.tp.domain.{Employee, WorkArea}
+import org.mag.tp.domain.employee.Employee
+import org.mag.tp.domain.employee
+import org.mag.tp.domain.WorkArea
 import org.mag.tp.util.{PausableActor, Scheduled}
 
 import scala.collection.{immutable, mutable}
@@ -23,7 +25,7 @@ object StatsLogger {
   case class GroupActionStats(currentCount: Int, changedCount: Int)
 }
 
-class StatsLogger(val employeeGroups: immutable.Seq[Employee.Group],
+class StatsLogger(val employeeGroups: immutable.Seq[employee.Group],
                   val timerFreq: FiniteDuration @@ StatsLogger.TimerFreq,
                   val frontend: ActorRef @@ FrontendActor)
   extends Actor with Scheduled with PausableActor {
@@ -34,8 +36,8 @@ class StatsLogger(val employeeGroups: immutable.Seq[Employee.Group],
 
   def timerMessage: Any = FlushLogSummary
 
-  var prevActionsByGroup = mutable.Map[Employee.Group, mutable.Buffer[WorkArea.Action]]()
-  var actionsByGroup = mutable.Map[Employee.Group, mutable.Buffer[WorkArea.Action]]()
+  var prevActionsByGroup = mutable.Map[employee.Group, mutable.Buffer[WorkArea.Action]]()
+  var actionsByGroup = mutable.Map[employee.Group, mutable.Buffer[WorkArea.Action]]()
 
   var actionsByEmployee = mutable.Map[ActorRef, mutable.Buffer[WorkArea.Action]]()
   var prevActionsByEmployee = mutable.Map[ActorRef, mutable.Buffer[WorkArea.Action]]()

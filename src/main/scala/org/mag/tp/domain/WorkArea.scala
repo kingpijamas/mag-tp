@@ -3,6 +3,7 @@ package org.mag.tp.domain
 import akka.actor.{Actor, ActorRef, Props, Terminated}
 import akka.routing.{ActorRefRoutee, RandomRoutingLogic, Router}
 import com.softwaremill.tagging.{@@, Tagger}
+import org.mag.tp.domain.employee.{Employee, Group}
 import org.mag.tp.util.PausableActor.{Pause, Resume}
 import org.mag.tp.util.{MandatoryBroadcastingActor, PartiallyBroadcastingActor, PausableActor}
 
@@ -12,15 +13,16 @@ object WorkArea {
   // messages
   sealed trait Action {
     def employee: ActorRef
-    def group: Employee.Group
+
+    def group: Group
   }
-  case class Work(employee: ActorRef, group: Employee.Group) extends Action
-  case class Loiter(employee: ActorRef, group: Employee.Group) extends Action
+  case class Work(employee: ActorRef, group: Group) extends Action
+  case class Loiter(employee: ActorRef, group: Group) extends Action
 }
 
-class WorkArea(val groups: immutable.Seq[Employee.Group],
+class WorkArea(val groups: immutable.Seq[Group],
                val visibility: Int,
-               val employeePropsFactory: (ActorRef @@ WorkArea, Employee.Group) => (Props @@ Employee),
+               val employeePropsFactory: (ActorRef @@ WorkArea, Group) => (Props @@ Employee),
                // FIXME: consider crashes!
                val mandatoryBroadcastables: Traversable[ActorRef])
   extends Actor with PartiallyBroadcastingActor with MandatoryBroadcastingActor with PausableActor {

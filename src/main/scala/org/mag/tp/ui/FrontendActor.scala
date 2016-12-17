@@ -3,7 +3,7 @@ package org.mag.tp.ui
 import akka.actor.{Actor, ActorRef, Props}
 import com.softwaremill.tagging._
 import org.atmosphere.cpr.AtmosphereResourceFactory
-import org.mag.tp.domain.{Employee, WorkArea}
+import org.mag.tp.domain.WorkArea
 import org.mag.tp.ui.StatsLogger.GroupActionStats
 import org.mag.tp.util.PausableActor.{Pause, Resume}
 import org.mag.tp.util.Stats.FullStats

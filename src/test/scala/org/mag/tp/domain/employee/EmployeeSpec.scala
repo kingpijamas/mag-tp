@@ -1,11 +1,12 @@
-package org.mag.tp.domain
+package org.mag.tp.domain.employee
 
 import akka.actor.Props
 import akka.testkit.{TestActorRef, TestProbe}
 import com.softwaremill.macwire._
 import com.softwaremill.tagging._
-import org.mag.tp.domain.Employee._
+import org.mag.tp.domain.WorkArea
 import org.mag.tp.domain.WorkArea._
+import org.mag.tp.domain.employee.Employee._
 import org.mag.tp.util.ProbabilityBag
 import org.mag.tp.{ActorSpec, UnitSpec}
 
@@ -19,7 +20,7 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
   class EmployeeTest(implicit maxMemories: Option[Int] = None,
                      permeability: Double @@ Permeability = 0.5.taggedWith[Permeability],
                      val originalWorkingProb: Double @@ WorkingProb = 0.5.taggedWith[WorkingProb]) {
-    val _timerFreq = (-1 seconds).taggedWith[TimerFreq]
+    val _timerFreq = (-1 seconds).taggedWith[Employee]
     val behaviours = ProbabilityBag.complete[Behaviour](
       WorkBehaviour -> originalWorkingProb,
       LoiterBehaviour -> (1 - originalWorkingProb)
@@ -42,12 +43,14 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
 
     def loiteringProbability = subject._behaviours(LoiterBehaviour)
 
-    def influenceToWork(times: Int = 1): Unit = { // FIXME
+    def influenceToWork(times: Int = 1): Unit = {
+      // FIXME
       (0 until times).foreach { _ => subjectRef ! Work(null, null) }
       subjectRef ! Act
     }
 
-    def influenceToLoiter(times: Int = 1): Unit = { // FIXME
+    def influenceToLoiter(times: Int = 1): Unit = {
+      // FIXME
       (0 until times).foreach { _ => subjectRef ! Loiter(null, null) }
       subjectRef ! Act
     }
