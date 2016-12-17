@@ -1,15 +1,14 @@
 package org.mag.tp.domain.employee
 
 import akka.actor.ActorRef
+import com.softwaremill.macwire.wire
 import org.mag.tp.domain.WorkArea
-import org.mag.tp.domain.WorkArea.{Loiter, Work}
-import org.mag.tp.domain.employee.Memory.{Observations, SingleMemory}
+import org.mag.tp.domain.WorkArea.{ActionType, Loiter, Work}
+import org.mag.tp.domain.employee.Memory.Observations
 
 import scala.collection.mutable
 
 object Memory {
-  case class SingleMemory(action: WorkArea.Action, author: ActorRef)
-
   class Observations(val workingProportion: Double) {
     val loiteringProportion: Double = 1 - workingProportion
 
@@ -32,47 +31,48 @@ object Memory {
         s"majorityBehaviour=$majorityBehaviour, " +
         s"majorityProportion=$majorityProportion)"
   }
+
+  def apply(maxSize: Option[Int] = None): Memory = wire[Memory]
 }
 
 class Memory(maxSize: Option[Int]) {
-  val memories = mutable.Queue[SingleMemory]()
-  val memoryCountsByAuthor = mutable.Map[ActorRef, Int]().withDefaultValue(0)
-  val totalsByActionClass = mutable.Map[Class[_ <: WorkArea.Action], Int]().withDefaultValue(0)
+  val rememberedActions = mutable.Queue[WorkArea.Action]()
+  val rememberedActionCountsByEmployee = mutable.Map[ActorRef, Int]().withDefaultValue(0)
+  val rememberedActionCountsByType = mutable.Map[ActionType, Int]().withDefaultValue(0)
 
-  def remember(action: WorkArea.Action, author: ActorRef): Unit = {
+  def remember(action: WorkArea.Action): Unit = {
     if (isFull) {
       forget()
     }
-    memories += SingleMemory(action, author)
-    memoryCountsByAuthor(author) += 1
-    totalsByActionClass(action.getClass) += 1
+    rememberedActions += action
+    rememberedActionCountsByEmployee(action.employee) += 1
+    rememberedActionCountsByType(action.getClass) += 1
   }
 
-  private[this] def isFull: Boolean = maxSize.isDefined && maxSize.get == memories.size
+  private[this] def isFull: Boolean = maxSize.isDefined && maxSize.get == rememberedActions.size
 
   private[this] def forget(): Unit = {
-    val SingleMemory(forgottenAction, forgottenAuthor) = memories.dequeue()
+    val forgottenMemory = rememberedActions.dequeue()
+    val forgottenAuthor = forgottenMemory.employee
 
-    memoryCountsByAuthor(forgottenAuthor) -= 1
-    if (memoryCountsByAuthor(forgottenAuthor) == 0) {
-      memoryCountsByAuthor -= forgottenAuthor
+    rememberedActionCountsByEmployee(forgottenAuthor) -= 1
+    if (rememberedActionCountsByEmployee(forgottenAuthor) == 0) {
+      rememberedActionCountsByEmployee -= forgottenAuthor
     }
 
-    totalsByActionClass(forgottenAction.getClass) -= 1
+    rememberedActionCountsByType(forgottenMemory.getClass) -= 1
   }
 
-  def knownEmployees: Traversable[ActorRef] = memoryCountsByAuthor.keys
-
-  def rememberedActions: Traversable[WorkArea.Action] = memories map (_.action)
+  def knownEmployees: Traversable[ActorRef] = rememberedActionCountsByEmployee.keys
 
   def globalObservations: Observations = {
-    val workingCount = totalsByActionClass(classOf[Work]).toDouble
-    new Observations(workingProportion = workingCount / memories.size)
+    val workingCount = rememberedActionCountsByType(classOf[Work]).toDouble
+    new Observations(workingProportion = workingCount / rememberedActions.size)
   }
 
   override def toString: String =
     "StatusPerception(" +
-      s"actions=$memories, " +
-      s"totalWork=${totalsByActionClass(classOf[Work])}, " +
-      s"totalLoitering=${totalsByActionClass(classOf[Loiter])})"
+      s"actions=$rememberedActions, " +
+      s"totalWork=${rememberedActionCountsByType(classOf[Work])}, " +
+      s"totalLoitering=${rememberedActionCountsByType(classOf[Loiter])})"
 }

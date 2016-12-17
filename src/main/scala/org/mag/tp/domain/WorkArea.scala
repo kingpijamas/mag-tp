@@ -18,6 +18,8 @@ object WorkArea {
   }
   case class Work(employee: ActorRef, group: Group) extends Action
   case class Loiter(employee: ActorRef, group: Group) extends Action
+
+  type ActionType = Class[_ <: WorkArea.Action]
 }
 
 class WorkArea(val groups: immutable.Seq[Group],

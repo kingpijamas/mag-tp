@@ -2,76 +2,22 @@ package org.mag.tp.controller
 
 import akka.actor.Actor._
 import akka.actor.{ActorRef, ActorSystem}
-import com.softwaremill.macwire.wire
-import com.softwaremill.tagging.{@@, Tagger}
 import org.json4s.{DefaultFormats, Formats}
 import org.mag.tp.MagTpStack
-import org.mag.tp.domain.employee.{Employee, LoiterBehaviour, WorkBehaviour}
-import org.mag.tp.domain.{DomainModule, employee}
 import org.mag.tp.ui.FrontendActor.{ClientConnected, SimulationStep, StartSimulation}
-import org.mag.tp.ui.{FrontendModule, StatsLogger}
-import org.mag.tp.util.ProbabilityBag
+import org.mag.tp.ui.Run
 import org.mag.tp.util.actor.Pausing.{Pause, Resume}
 import org.scalatra.SessionSupport
 import org.scalatra.atmosphere.{AtmosphereClient, AtmosphereSupport, Disconnected, Error, JsonMessage}
 import org.scalatra.json.{JValueResult, JacksonJsonSupport}
 
-import scala.collection.{immutable, mutable}
-import scala.concurrent.duration._
-
-object UIController {
-  object Run {
-    def apply(system: ActorSystem, params: Map[String, String]): Run = {
-      val cleanParams = params filter { case (_, value) => !value.isEmpty }
-
-      def getOptionalInt(key: String) = cleanParams.get(key).map(_.toInt)
-
-      def getInt(key: String, defaultValue: Int) = getOptionalInt(key).getOrElse(defaultValue)
-
-      def getDouble(key: String, defaultValue: Double) = cleanParams.get(key).map(_.toDouble).getOrElse(defaultValue)
-
-      val employeesMemory = getOptionalInt("employeesMemory")
-      val visibility = getInt("visibility", defaultValue = 5)
-
-      val backendTimerFreq = getDouble("backendTimerFreq", defaultValue = 0.2).seconds.taggedWith[Employee]
-      val loggingTimerFreq = getDouble("loggingTimerFreq", defaultValue = 0.7).seconds.taggedWith[StatsLogger]
-
-      val workingGroup = employee.Group(
-        id = "workers",
-        targetSize = getInt("workersCount", defaultValue = 500),
-        permeability = getDouble("workersPermeability", defaultValue = 0.5),
-        maxMemories = employeesMemory,
-        baseBehaviours = ProbabilityBag.complete[employee.Behaviour](WorkBehaviour -> 1, LoiterBehaviour -> 0)
-      )
-      val loiteringGroup = employee.Group(
-        id = "loiterers",
-        targetSize = getInt("loiterersCount", defaultValue = 500),
-        permeability = getDouble("loiterersPermeability", defaultValue = 0),
-        maxMemories = employeesMemory,
-        baseBehaviours = ProbabilityBag.complete[employee.Behaviour](WorkBehaviour -> 0, LoiterBehaviour -> 1)
-      )
-
-      val groups = immutable.Seq(workingGroup, loiteringGroup)
-
-      wire[Run]
-    }
-  }
-
-  class Run(val system: ActorSystem,
-            val employeeGroups: immutable.Seq[employee.Group],
-            val employeeTimerFreq: FiniteDuration @@ Employee,
-            val visibility: Int,
-            val statsLoggerTimerFreq: FiniteDuration @@ StatsLogger)
-    extends DomainModule with FrontendModule
-}
+import scala.collection.mutable
 
 class UIController(system: ActorSystem) extends MagTpStack
   with JValueResult
   with JacksonJsonSupport
   with SessionSupport
   with AtmosphereSupport {
-
-  import UIController._
 
   implicit protected val jsonFormats: Formats = DefaultFormats // XXX move!
 
@@ -91,7 +37,9 @@ class UIController(system: ActorSystem) extends MagTpStack
     contentType = "text/html"
 
     println(params.toMap)
-    currentRun = Some(Run(system, params))
+    val cleanParams = params filter { case (_, value) => !value.isEmpty }
+
+    currentRun = Some(Run(system, cleanParams))
     jade("simulation.jade")
   }
 

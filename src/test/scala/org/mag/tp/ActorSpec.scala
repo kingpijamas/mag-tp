@@ -1,6 +1,7 @@
 package org.mag.tp
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorRef, ActorSystem}
+import akka.testkit.TestProbe
 import org.scalatest.{BeforeAndAfterAll, Suite}
 
 trait ActorSpec extends BeforeAndAfterAll {
@@ -8,11 +9,17 @@ trait ActorSpec extends BeforeAndAfterAll {
 
   implicit val system = ActorSystem("test-system")
 
-  override def afterAll() {
+  def testRef(): ActorRef = TestProbe().ref
+
+  def testRefAndProbe(): (ActorRef, TestProbe) = {
+    val testProbe = TestProbe()
+    (testProbe.ref, testProbe)
+  }
+
+  override def afterAll(): Unit = {
     try {
       super.afterAll()
-    }
-    finally {
+    } finally {
       system.terminate()
     }
   }

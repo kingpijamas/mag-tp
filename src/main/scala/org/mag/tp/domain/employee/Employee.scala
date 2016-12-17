@@ -20,7 +20,7 @@ class Employee(val group: Group,
                val workArea: ActorRef @@ WorkArea)
   extends Actor with RandomBehaviours with Scheduling with Pausing {
 
-  val memory = new Memory(group.maxMemories)
+  val memory = Memory(group.maxMemories)
   var _behaviours: ProbabilityBag[Behaviour] = group.baseBehaviours
 
   def timerMessage: Any = Act
@@ -67,6 +67,6 @@ class Employee(val group: Group,
   }
 
   def receive: Receive = respectPauses orElse actRandomly orElse {
-    case action: WorkArea.Action => memory.remember(action, sender)
+    case action: WorkArea.Action => memory.remember(action)
   }
 }
