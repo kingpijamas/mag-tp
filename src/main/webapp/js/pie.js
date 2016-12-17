@@ -1,28 +1,27 @@
-var pieChart = null;
+var _pieChart = null;
 
-function updatePieChartData(data) {
-    if (data.type != 'statsLog') { return; }
-
-    const workersCount = accumulateAttributeInChildren(data.stats.work, 'currentCount', 0);
-    const loiterersCount = accumulateAttributeInChildren(data.stats.loiter, 'currentCount', 0);
-    const total = workersCount + loiterersCount;
+function _updatePieChartData(stats) {
+    const workersCount = stats.workersCount
+    const total = workersCount + stats.loiterersCount;
     const workingPct = (workersCount / total) * 100;
 
-    pieChart.data[0].value = workingPct;
-    pieChart.data[1].value = 100 - workingPct;
-    pieChart.chart.update(pieChart.data);
+    _pieChart.data[0].value = workingPct;
+    _pieChart.data[1].value = 100 - workingPct;
+    _pieChart.chart.update(_pieChart.data);
 }
 
 $(function () {
-    pieChart = {};
+    _pieChart = {};
 
-    pieChart.data = [
+    _pieChart.data = [
         {label: 'Trabajadores', value: 0},
         {label: 'Holgazanes', value: 100}
     ];
 
-    pieChart.chart = $('#pie-chart').epoch({
+    _pieChart.chart = $('#pie-chart').epoch({
         type: 'pie',
-        data: pieChart.data
+        data: _pieChart.data
     });
+
+    subscribeStatsListener(_updatePieChartData);
 });

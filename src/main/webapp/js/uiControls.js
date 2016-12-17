@@ -1,5 +1,5 @@
 $(() => {
-    let restartButton = $('#restart-btn');
+    const restartButton = $('#restart-btn');
     restartButton.click(() => {
       resetCounters();
       restartButton.text('Reiniciar');

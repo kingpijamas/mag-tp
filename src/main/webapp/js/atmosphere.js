@@ -1,9 +1,9 @@
-var atmosphereStarted = false;
+var _atmosphereStarted = false;
 
 function startAtmosphereConnection(url) {
-    if (atmosphereStarted) { return; }
+    if (_atmosphereStarted) { return; }
 
-    atmosphereStarted = true;
+    _atmosphereStarted = true;
     const socket = $.atmosphere;
     const request = {
         url: url,
@@ -17,17 +17,14 @@ function startAtmosphereConnection(url) {
     };
     request.onMessage = function (response) {
         const responseBody = JSON.parse(response.responseBody);
-        console.log(response.responseBody);
-        updatePieChartData(responseBody);
-        updateAreaChartData(responseBody);
-        updateLineChartData(responseBody);
-        updateCounterData(responseBody);
+        console.log(response.responseBody); // TODO: remove!
+        updateStats(responseBody);
     };
     request.onClose = function (response) {
-        atmosphereStarted = false;
+        _atmosphereStarted = false;
     };
     request.onError = function (response) {
-        atmosphereStarted = false;
+        _atmosphereStarted = false;
     };
 
     const subSocket = socket.subscribe(request);

@@ -1,31 +1,25 @@
-var lineChart = null;
+var _lineChart = null;
 
-function updateLineChartData(data) {
-    if (data.type != 'statsLog') { return; }
-    lineChart.ticks++;
-
-    const changedToWorkCount = accumulateAttributeInChildren(data.stats.work, 'changedCount', 0);
-    const changedToLoiteringCount = accumulateAttributeInChildren(data.stats.loiter, 'changedCount', 0);
-
-    lineChart.data[0].values.push({x: lineChart.ticks, y: changedToWorkCount});
-    lineChart.data[1].values.push({x: lineChart.ticks, y: changedToLoiteringCount});
-    lineChart.chart.update(lineChart.data);
+function _updateLineChartData(stats) {
+    _lineChart.data[0].values.push({x: stats.ticks, y: stats.changedToWorkCount});
+    _lineChart.data[1].values.push({x: stats.ticks, y: stats.changedToLoiteringCount});
+    _lineChart.chart.update(_lineChart.data);
 }
 
 $(function () {
-    lineChart = {
-        ticks: 0
-    };
-    lineChart.data = [
+    _lineChart = {};
+    _lineChart.data = [
         {label: 'New workers (count)', values: []},
         {label: 'New loiterers (count)', values: []},
     ];
-    lineChart.data[0].values.push({x: 0, y: 0});
-    lineChart.data[1].values.push({x: 0, y: 0});
+    _lineChart.data[0].values.push({x: 0, y: 0});
+    _lineChart.data[1].values.push({x: 0, y: 0});
 
-    lineChart.chart = $('#line-chart').epoch({
+    _lineChart.chart = $('#line-chart').epoch({
         type: 'line',
-        data: lineChart.data,
+        data: _lineChart.data,
         axes: ['left', 'right', 'bottom']
     });
+
+    subscribeStatsListener(_updateLineChartData);
 });
