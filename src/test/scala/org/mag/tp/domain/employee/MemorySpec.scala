@@ -3,6 +3,7 @@ package org.mag.tp.domain.employee
 import akka.actor.ActorRef
 import com.softwaremill.macwire.wire
 import org.mag.tp.domain.WorkArea.{ActionType, Loiter, Work}
+import org.mag.tp.domain.employee.Memory.Observations
 import org.mag.tp.util.ProbabilityBag
 import org.mag.tp.{ActorSpec, UnitSpec}
 
@@ -46,6 +47,8 @@ class MemorySpec extends UnitSpec with ActorSpec {
     def rememberedActionsCountByEmployee: (ActorRef => Int) = subject.rememberedActionCountsByEmployee
 
     def knownEmployees: Traversable[ActorRef] = subject.knownEmployees
+
+    lazy val globalObservations: Observations = subject.globalObservations
   }
 
   "A Memory" when {
@@ -58,6 +61,57 @@ class MemorySpec extends UnitSpec with ActorSpec {
         rememberedActionsCount(classOf[Work]) should be(1)
         rememberedActionsCountByEmployee(anEmployee) should be(1)
         knownEmployees should contain(anEmployee)
+      }
+
+      "change its observations" in new MemoryTest {
+        rememberWork()
+        val previousObservations = subject.globalObservations
+        rememberLoitering()
+        val newObservations = subject.globalObservations
+
+        newObservations should not be(previousObservations)
+      }
+    }
+
+    "given several Actions to remember" should {
+      val workRemembered = 55
+      val loiteringRemembered = 45
+
+      "give correct observations" in new MemoryTest {
+        rememberWork(times = workRemembered)
+        rememberLoitering(times = loiteringRemembered)
+
+        val workingProportion = workRemembered.toDouble / (workRemembered + loiteringRemembered)
+        val loiteringProportion = 1 - workingProportion
+
+        globalObservations.workingProportion should be(workingProportion)
+        globalObservations.loiteringProportion should be(loiteringProportion)
+        globalObservations.majorityBehaviour should be(WorkBehaviour)
+        globalObservations.majorityProportion should be(workingProportion)
+        globalObservations.minorityBehaviour should be(LoiterBehaviour)
+        globalObservations.minorityProportion should be(loiteringProportion)
+      }
+    }
+  }
+
+  "An empty memory" when {
+    "given a single Action to remember" should {
+      val workRemembered = 0
+      val loiteringRemembered = 1
+
+      "give correct observations" in new MemoryTest {
+        rememberWork(times = workRemembered)
+        rememberLoitering(times = loiteringRemembered)
+
+        val workingProportion = workRemembered.toDouble / (workRemembered + loiteringRemembered)
+        val loiteringProportion = 1 - workingProportion
+
+        globalObservations.workingProportion should be(workingProportion)
+        globalObservations.loiteringProportion should be(loiteringProportion)
+        globalObservations.majorityBehaviour should be(LoiterBehaviour)
+        globalObservations.majorityProportion should be(loiteringProportion)
+        globalObservations.minorityBehaviour should be(WorkBehaviour)
+        globalObservations.minorityProportion should be(workingProportion)
       }
     }
   }
@@ -73,7 +127,7 @@ class MemorySpec extends UnitSpec with ActorSpec {
 
         rememberedActionsCount(classOf[Loiter]) should be(0)
         rememberedActionsCount(classOf[Work]) should be(maxMemories.get)
-        knownEmployees should not contain(employeeToForget)
+        knownEmployees should not contain (employeeToForget)
         rememberedActionsCountByEmployee(employeeToForget) should be(0)
       }
     }

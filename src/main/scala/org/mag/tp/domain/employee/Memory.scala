@@ -26,6 +26,27 @@ object Memory {
       case LoiterBehaviour => loiteringProportion
     }
 
+    def canEqual(other: Any): Boolean = other.isInstanceOf[Observations]
+
+    override def equals(other: Any): Boolean = other match {
+      case that: Observations =>
+        (that canEqual this) &&
+          loiteringProportion == that.loiteringProportion &&
+          majorityBehaviour == that.majorityBehaviour &&
+          majorityProportion == that.majorityProportion &&
+          minorityBehaviour == that.minorityBehaviour &&
+          minorityProportion == that.minorityProportion &&
+          workingProportion == that.workingProportion
+      case _ => false
+    }
+
+    override def hashCode(): Int = {
+      val state = Seq(loiteringProportion, majorityBehaviour, majorityProportion, minorityBehaviour,
+        minorityProportion, workingProportion)
+      val hashCodes = state map (_.hashCode)
+      hashCodes.foldLeft(0)((a, b) => 31 * a + b)
+    }
+
     override def toString: String =
       "GlobalBehaviourObservations(" +
         s"majorityBehaviour=$majorityBehaviour, " +
