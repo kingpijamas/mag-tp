@@ -51,7 +51,7 @@ class StatsLogger(val timerFreq: Option[FiniteDuration] @@ StatsLogger,
 
   def loggingEnabled: Receive = respectPauses orElse {
     case action: WorkArea.Action =>
-      val knownEmployeeActions = actionsByEmployee.getOrElseUpdate(sender, mutable.Buffer())
+      val knownEmployeeActions = actionsByEmployee.getOrElseUpdate(action.employee, mutable.Buffer())
       knownEmployeeActions += action
 
       val knownGroupActions = actionsByGroup.getOrElseUpdate(action.group, mutable.Buffer())

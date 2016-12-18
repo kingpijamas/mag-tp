@@ -64,11 +64,25 @@ class StatsLoggerSpec extends UnitSpec with ActorSpec with DomainMocks {
     "resumed" should {
       "not ignore all messages" in new StatsLoggerTest {
         resume()
+
         receiveWork()
-        sizeOf(actionsByGroup) should not be (0)
-        sizeOf(actionsByEmployee) should not be (0)
+        sizeOf(actionsByGroup) should not be 0
+        sizeOf(actionsByEmployee) should not be 0
+      }
+
+      "register the actions it receives" in new StatsLoggerTest {
+        resume()
+
+        val aGroup = testGroup("A")
+        val anEmployee = testRef[Employee]
+        receiveWork(employee = anEmployee, group = aGroup)
+
+        actionsByGroup.get(aGroup) should not be None
+        actionsByEmployee.get(anEmployee) should not be None
       }
     }
+
+
   }
 
 }
