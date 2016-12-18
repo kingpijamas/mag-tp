@@ -103,5 +103,6 @@ class ProbabilityBag[T](entries: Iterable[ProbabilityBag.Entry[T]],
     }
   }
 
-  override def toString: String = s"ProbabilityBag(${entries.map(_.valueAndProb)})"
+  override def toString: String =
+    s"ProbabilityBag(${entries map (_.valueAndProb) mkString (",")})"
 }

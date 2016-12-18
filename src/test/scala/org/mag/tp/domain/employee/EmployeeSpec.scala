@@ -38,13 +38,13 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
     val subjectRef: TestActorRef[Employee] = TestActorRef.create(system, Props(wire[Employee]))
     val subject: Employee = subjectRef.underlyingActor
 
+    def rememberedActionTypes: Traversable[ActionType] = subject.memory.rememberedActions map (_.getClass)
+
+    def rememberedActionsCount: (ActionType => Int) = subject.memory.rememberedActionCountsByType
+
     def workingProbability: Double = subject._behaviours(WorkBehaviour)
 
     def loiteringProbability: Double = subject._behaviours(LoiterBehaviour)
-
-    def rememberedActionTypes: Traversable[ActionType] = subject.memory.rememberedActions map (_.getClass)
-
-    def rememberedActionsCount(typ: ActionType): Int = subject.memory.rememberedActionCountsByType(typ)
 
     def influenceSubjectToWork(employee: ActorRef = testRef(),
                                groupId: String = "anotherTestGroup",
@@ -67,8 +67,8 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
     "witnessing an Action" should {
       "remember it" in new EmployeeTest {
         influenceSubjectToWork()
-        subject.memory.rememberedActions map (_.getClass) should contain(classOf[Work])
-        subject.memory.rememberedActionCountsByType(classOf[Work]) should be(1)
+        rememberedActionTypes should contain(classOf[Work])
+        rememberedActionsCount(classOf[Work]) should be(1)
         subject.memory.rememberedActionCountsByEmployee.values should contain(1)
       }
     }
@@ -103,9 +103,10 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
   }
 
   "A positively-permeable Employee" when {
+    implicit val permeability = 0.7.taggedWith[Permeability]
+
     "the majority is loitering" should {
       "reduce its tendency to work" in {
-        implicit val permeability = 0.7.taggedWith[Permeability]
         new EmployeeTest {
           influenceSubjectToLoiter(times = 200)
           influenceSubjectToWork(times = 50)
@@ -118,7 +119,6 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
 
     "the majority is working" should {
       "increase its tendency to work" in {
-        implicit val permeability = 0.7.taggedWith[Permeability]
         new EmployeeTest {
           influenceSubjectToLoiter(times = 50)
           influenceSubjectToWork(times = 200)
@@ -159,9 +159,10 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
   }
 
   "A negatively-permeable Employee" when {
+    implicit val permeability = -0.7.taggedWith[Permeability]
+
     "the majority is loitering" should {
       "increase its tendency to work" in {
-        implicit val permeability = -0.7.taggedWith[Permeability]
         new EmployeeTest {
           influenceSubjectToLoiter(times = 200)
           influenceSubjectToWork(times = 50)
@@ -174,7 +175,6 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
 
     "the majority is working" should {
       "reduce its tendency to work" in {
-        implicit val permeability = -0.7.taggedWith[Permeability]
         new EmployeeTest {
           influenceSubjectToLoiter(times = 50)
           influenceSubjectToWork(times = 200)

@@ -53,11 +53,11 @@ class Memory(maxSize: Option[Int]) {
 
   private[this] def forget(): Unit = {
     val forgottenMemory = rememberedActions.dequeue()
-    val forgottenAuthor = forgottenMemory.employee
+    val forgottenEmployee = forgottenMemory.employee
 
-    rememberedActionCountsByEmployee(forgottenAuthor) -= 1
-    if (rememberedActionCountsByEmployee(forgottenAuthor) == 0) {
-      rememberedActionCountsByEmployee -= forgottenAuthor
+    rememberedActionCountsByEmployee(forgottenEmployee) -= 1
+    if (rememberedActionCountsByEmployee(forgottenEmployee) == 0) {
+      rememberedActionCountsByEmployee -= forgottenEmployee
     }
 
     rememberedActionCountsByType(forgottenMemory.getClass) -= 1

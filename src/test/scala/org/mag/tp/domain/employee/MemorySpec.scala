@@ -1,9 +1,7 @@
 package org.mag.tp.domain.employee
 
 import akka.actor.ActorRef
-import akka.testkit.TestProbe
 import com.softwaremill.macwire.wire
-import com.softwaremill.tagging.Tagger
 import org.mag.tp.domain.WorkArea.{ActionType, Loiter, Work}
 import org.mag.tp.util.ProbabilityBag
 import org.mag.tp.{ActorSpec, UnitSpec}
@@ -43,16 +41,64 @@ class MemorySpec extends UnitSpec with ActorSpec {
 
     def rememberedActionTypes: Traversable[ActionType] = subject.rememberedActions map (_.getClass)
 
-    def rememberedActionsCount(typ: ActionType): Int = subject.rememberedActionCountsByType(typ)
+    def rememberedActionsCount: (ActionType => Int) = subject.rememberedActionCountsByType
+
+    def rememberedActionsCountByEmployee: (ActorRef => Int) = subject.rememberedActionCountsByEmployee
+
+    def knownEmployees: Traversable[ActorRef] = subject.knownEmployees
   }
 
   "A Memory" when {
-    "witnessing an Action" should {
+    "given an Action to remember" should {
       "remember it" in new MemoryTest {
-        rememberWork()
+        val anEmployee = testRef()
+        rememberWork(employee = anEmployee)
+
         rememberedActionTypes should contain(classOf[Work])
         rememberedActionsCount(classOf[Work]) should be(1)
-        subject.rememberedActionCountsByEmployee.values should contain(1)
+        rememberedActionsCountByEmployee(anEmployee) should be(1)
+        knownEmployees should contain(anEmployee)
+      }
+    }
+  }
+
+  "A limited Memory" when {
+    implicit val maxMemories = Some(3)
+
+    "given an Action to remember and full" should {
+      "forget the earliest Action it remembers" in new MemoryTest {
+        val employeeToForget = testRef()
+        rememberLoitering(employee = employeeToForget)
+        rememberWork(times = maxMemories.get)
+
+        rememberedActionsCount(classOf[Loiter]) should be(0)
+        rememberedActionsCount(classOf[Work]) should be(maxMemories.get)
+        knownEmployees should not contain(employeeToForget)
+        rememberedActionsCountByEmployee(employeeToForget) should be(0)
+      }
+    }
+
+    "given an Action to remember and not full" should {
+      "not forget the earliest Action it remembers" in new MemoryTest {
+        rememberLoitering()
+        rememberWork(times = maxMemories.get - 1)
+
+        rememberedActionsCount(classOf[Loiter]) should be(1)
+        rememberedActionsCount(classOf[Work]) should be(maxMemories.get - 1)
+      }
+    }
+  }
+
+  "An unlimited Memory" when {
+    implicit val maxMemories: Option[Int] = None
+
+    "given an Action to remember" should {
+      "not forget the earliest Action it remembers" in new MemoryTest {
+        rememberLoitering()
+        rememberWork(times = 3)
+
+        rememberedActionsCount(classOf[Loiter]) should be(1)
+        rememberedActionsCount(classOf[Work]) should be(3)
       }
     }
   }
