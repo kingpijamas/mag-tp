@@ -16,7 +16,7 @@ object Employee {
 }
 
 class Employee(val group: Group,
-               val timerFreq: FiniteDuration @@ Employee,
+               val timerFreq: Option[FiniteDuration] @@ Employee,
                val workArea: ActorRef @@ WorkArea)
   extends Actor with RandomBehaviours with Scheduling with Pausing {
 

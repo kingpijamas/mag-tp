@@ -4,41 +4,31 @@ import akka.actor.ActorRef
 import com.softwaremill.macwire.wire
 import org.mag.tp.domain.WorkArea.{ActionType, Loiter, Work}
 import org.mag.tp.domain.employee.Memory.Observations
-import org.mag.tp.util.ProbabilityBag
-import org.mag.tp.{ActorSpec, UnitSpec}
+import org.mag.tp.{ActorSpec, DomainMocks, UnitSpec}
 
 import scala.language.postfixOps
 
-class MemorySpec extends UnitSpec with ActorSpec {
-  trait Permeability
-  trait WorkingProb
-
+class MemorySpec extends UnitSpec with ActorSpec with DomainMocks {
   class MemoryTest(implicit maxMemories: Option[Int] = None) {
     val subject: Memory = wire[Memory]
 
-    def rememberWork(employee: ActorRef = testRef(),
+    def rememberWork(employee: ActorRef = testRef,
                      groupId: String = "testGroup",
                      times: Int = 1): Unit = {
+      val group = testGroup(groupId)
       (0 until times).foreach { _ =>
-        subject.remember(Work(employee, group(groupId)))
+        subject.remember(Work(employee, group))
       }
     }
 
-    def rememberLoitering(employee: ActorRef = testRef(),
+    def rememberLoitering(employee: ActorRef = testRef,
                           groupId: String = "testGroup",
                           times: Int = 1): Unit = {
+      val group = testGroup(groupId)
       (0 until times).foreach { _ =>
-        subject.remember(Loiter(employee, group(groupId)))
+        subject.remember(Loiter(employee, group))
       }
     }
-
-    def group(id: String): Group = Group(
-      id = id,
-      targetSize = 100,
-      permeability = 0.5,
-      maxMemories = maxMemories,
-      baseBehaviours = ProbabilityBag.complete[Behaviour](WorkBehaviour -> 0.5, LoiterBehaviour -> 0.5)
-    )
 
     def rememberedActionTypes: Traversable[ActionType] = subject.rememberedActions map (_.getClass)
 
@@ -54,7 +44,7 @@ class MemorySpec extends UnitSpec with ActorSpec {
   "A Memory" when {
     "given an Action to remember" should {
       "remember it" in new MemoryTest {
-        val anEmployee = testRef()
+        val anEmployee = testRef[Employee]
         rememberWork(employee = anEmployee)
 
         rememberedActionTypes should contain(classOf[Work])
@@ -69,7 +59,7 @@ class MemorySpec extends UnitSpec with ActorSpec {
         rememberLoitering()
         val newObservations = subject.globalObservations
 
-        newObservations should not be(previousObservations)
+        newObservations should not be (previousObservations)
       }
     }
 
@@ -121,7 +111,7 @@ class MemorySpec extends UnitSpec with ActorSpec {
 
     "given an Action to remember and full" should {
       "forget the earliest Action it remembers" in new MemoryTest {
-        val employeeToForget = testRef()
+        val employeeToForget = testRef[Employee]
         rememberLoitering(employee = employeeToForget)
         rememberWork(times = maxMemories.get)
 

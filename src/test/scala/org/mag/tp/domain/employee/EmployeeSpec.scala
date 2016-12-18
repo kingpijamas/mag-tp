@@ -8,23 +8,24 @@ import org.mag.tp.domain.WorkArea
 import org.mag.tp.domain.WorkArea.{ActionType, Loiter, Work}
 import org.mag.tp.domain.employee.Employee.Act
 import org.mag.tp.util.ProbabilityBag
-import org.mag.tp.{ActorSpec, UnitSpec}
+import org.mag.tp.{ActorSpec, DomainMocks, UnitSpec}
 
-import scala.concurrent.duration.DurationDouble
 import scala.language.postfixOps
 
-class EmployeeSpec extends UnitSpec with ActorSpec {
+class EmployeeSpec extends UnitSpec with ActorSpec with DomainMocks {
   trait Permeability
   trait WorkingProb
 
   class EmployeeTest(implicit maxMemories: Option[Int] = None,
                      permeability: Double @@ Permeability = 0.5.taggedWith[Permeability],
                      val originalWorkingProb: Double @@ WorkingProb = 0.5.taggedWith[WorkingProb]) {
-    val _timerFreq = (-1 seconds).taggedWith[Employee]
+    val timerFreq = dummyTime.taggedWith[Employee]
+
     val behaviours = ProbabilityBag.complete[Behaviour](
       WorkBehaviour -> originalWorkingProb,
       LoiterBehaviour -> (1 - originalWorkingProb)
     )
+
     val group = Group(
       id = "testGroup",
       targetSize = 100,
@@ -33,7 +34,7 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
       baseBehaviours = behaviours
     )
 
-    val workAreaRef = testRef().taggedWith[WorkArea]
+    val workAreaRef = testRef[WorkArea]
 
     val subjectRef: TestActorRef[Employee] = TestActorRef.create(system, Props(wire[Employee]))
     val subject: Employee = subjectRef.underlyingActor
@@ -46,17 +47,21 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
 
     def loiteringProbability: Double = subject._behaviours(LoiterBehaviour)
 
-    def influenceSubjectToWork(employee: ActorRef = testRef(),
+    def influenceSubjectToWork(employee: ActorRef = testRef[Employee],
                                groupId: String = "anotherTestGroup",
                                times: Int = 1): Unit = {
-      (0 until times).foreach { _ => subjectRef ! Work(employee, group(groupId)) }
+      (0 until times).foreach { _ =>
+        subjectRef ! Work(employee, group(groupId))
+      }
       subjectRef ! Act
     }
 
-    def influenceSubjectToLoiter(employee: ActorRef = testRef(),
+    def influenceSubjectToLoiter(employee: ActorRef = testRef[Employee],
                                  groupId: String = "anotherTestGroup",
                                  times: Int = 1): Unit = {
-      (0 until times).foreach { _ => subjectRef ! Loiter(employee, group(groupId)) }
+      (0 until times).foreach { _ =>
+        subjectRef ! Loiter(employee, group(groupId))
+      }
       subjectRef ! Act
     }
 
@@ -67,6 +72,7 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
     "witnessing an Action" should {
       "remember it" in new EmployeeTest {
         influenceSubjectToWork()
+
         rememberedActionTypes should contain(classOf[Work])
         rememberedActionsCount(classOf[Work]) should be(1)
         subject.memory.rememberedActionCountsByEmployee.values should contain(1)
@@ -106,26 +112,22 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
     implicit val permeability = 0.7.taggedWith[Permeability]
 
     "the majority is loitering" should {
-      "reduce its tendency to work" in {
-        new EmployeeTest {
-          influenceSubjectToLoiter(times = 200)
-          influenceSubjectToWork(times = 50)
+      "reduce its tendency to work" in new EmployeeTest {
+        influenceSubjectToLoiter(times = 200)
+        influenceSubjectToWork(times = 50)
 
-          workingProbability should be < originalWorkingProb.asInstanceOf[Double]
-          loiteringProbability should be > (1 - originalWorkingProb.asInstanceOf[Double])
-        }
+        workingProbability should be < originalWorkingProb.asInstanceOf[Double]
+        loiteringProbability should be > (1 - originalWorkingProb.asInstanceOf[Double])
       }
     }
 
     "the majority is working" should {
-      "increase its tendency to work" in {
-        new EmployeeTest {
-          influenceSubjectToLoiter(times = 50)
-          influenceSubjectToWork(times = 200)
+      "increase its tendency to work" in new EmployeeTest {
+        influenceSubjectToLoiter(times = 50)
+        influenceSubjectToWork(times = 200)
 
-          workingProbability should be > originalWorkingProb.asInstanceOf[Double]
-          loiteringProbability should be < (1 - originalWorkingProb.asInstanceOf[Double])
-        }
+        workingProbability should be > originalWorkingProb.asInstanceOf[Double]
+        loiteringProbability should be < (1 - originalWorkingProb.asInstanceOf[Double])
       }
     }
   }
@@ -162,26 +164,22 @@ class EmployeeSpec extends UnitSpec with ActorSpec {
     implicit val permeability = -0.7.taggedWith[Permeability]
 
     "the majority is loitering" should {
-      "increase its tendency to work" in {
-        new EmployeeTest {
-          influenceSubjectToLoiter(times = 200)
-          influenceSubjectToWork(times = 50)
+      "increase its tendency to work" in new EmployeeTest {
+        influenceSubjectToLoiter(times = 200)
+        influenceSubjectToWork(times = 50)
 
-          workingProbability should be > originalWorkingProb.asInstanceOf[Double]
-          loiteringProbability should be < (1 - originalWorkingProb.asInstanceOf[Double])
-        }
+        workingProbability should be > originalWorkingProb.asInstanceOf[Double]
+        loiteringProbability should be < (1 - originalWorkingProb.asInstanceOf[Double])
       }
     }
 
     "the majority is working" should {
-      "reduce its tendency to work" in {
-        new EmployeeTest {
-          influenceSubjectToLoiter(times = 50)
-          influenceSubjectToWork(times = 200)
+      "reduce its tendency to work" in new EmployeeTest {
+        influenceSubjectToLoiter(times = 50)
+        influenceSubjectToWork(times = 200)
 
-          workingProbability should be < originalWorkingProb.asInstanceOf[Double]
-          loiteringProbability should be > (1 - originalWorkingProb.asInstanceOf[Double])
-        }
+        workingProbability should be < originalWorkingProb.asInstanceOf[Double]
+        loiteringProbability should be > (1 - originalWorkingProb.asInstanceOf[Double])
       }
     }
   }

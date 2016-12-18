@@ -13,9 +13,10 @@ trait Scheduling {
 
   def timerMessage: Any
 
-  def timerFreq: FiniteDuration
+  def timerFreq: Option[FiniteDuration]
 
-  val tick = context.system.scheduler.schedule(initialDelay, timerFreq, this.self, timerMessage)
+  // XXX side-effectful map
+  val tick = timerFreq map (context.system.scheduler.schedule(initialDelay, _, this.self, timerMessage))
 
-  override def postStop(): Unit = tick.cancel()
+  override def postStop(): Unit = tick.foreach(_.cancel())
 }

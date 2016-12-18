@@ -18,36 +18,29 @@ object FrontendActor {
   type ActionStats = FullStats[Int]
 
   // FIXME: these two shouldn't be necessary!
-  // implicit def fullStatsFormatter: JsonFormat[ActionStats] = jsonFormat7(FullStats.apply[Int])
   implicit val GroupActionStatsFormatter = jsonFormat2(GroupActionStats)
   implicit val StatsLogFormatter = jsonFormat2(StatsLog)
 
-  case class ClientConnected(clientUuid: String)
-
   // messages
+  case class ClientConnected(clientUuid: String)
   case object StartSimulation
   case object StopSimulation
   case object SimulationStep
   // FIXME: type won't be necessary once json-shapeless comes into action
   case class StatsLog(stats: immutable.Map[String, immutable.Map[String, GroupActionStats]],
                       `type`: String = "statsLog")
-  //  workingCount: Int,
-  //  newWorkersCount: Int,
-  //  // workStats: ActionStats,
-  //  loiteringCount: Int,
-  //  newLoiterersCount: Int,
-  //  // loiteringStats: ActionStats,
 }
 
-class FrontendActor(timerFreq: FiniteDuration @@ StatsLogger,
+class FrontendActor(timerFreq: Option[FiniteDuration] @@ StatsLogger,
                     workAreaPropsFactory: (Traversable[ActorRef] => Props @@ WorkArea),
                     statsLoggersFactory: ((ActorRef @@ FrontendActor) => (Props @@ StatsLogger)))
   extends Actor {
   import context._
 
   var connectedClientUuids = mutable.Buffer[String]()
+  var children = immutable.Seq[ActorRef]()
   var workArea = Option.empty[ActorRef]
-  var statsLoggers = Seq[ActorRef]()
+  var statsLoggers = immutable.Seq[ActorRef]()
   var stopsCount = 0
 
   def receive: Receive = {
@@ -57,22 +50,17 @@ class FrontendActor(timerFreq: FiniteDuration @@ StatsLogger,
 
     case StartSimulation =>
       stopChildren()
-      createstatsLogger()
-      workArea = Some(createWorkArea())
+      createChildren()
 
-    case Pause =>
-      pauseChildren()
+    case Pause => pauseChildren()
 
-    case Resume =>
-      resumeChildren()
+    case Resume => resumeChildren()
 
     case SimulationStep =>
-      pauseChildren()
-      context.system.scheduler.scheduleOnce(timerFreq) {
-        resumeChildren()
-      }
-      context.system.scheduler.scheduleOnce(timerFreq * 2) {
+      timerFreq.foreach { freq =>
         pauseChildren()
+        context.system.scheduler.scheduleOnce(freq) { resumeChildren() }
+        context.system.scheduler.scheduleOnce(freq * 2) { pauseChildren() }
       }
 
     case StopSimulation =>
@@ -85,21 +73,33 @@ class FrontendActor(timerFreq: FiniteDuration @@ StatsLogger,
     case _ => // ignore unknown messages
   }
 
-  private[this] def createstatsLogger() = {
-    val statsLogger = context.actorOf(statsLoggersFactory(self.taggedWith[FrontendActor]))
-    statsLoggers = Seq(statsLogger)
-    statsLogger ! Resume
-    statsLogger
-  }
-
-  private[this] def createWorkArea() = {
-    context.actorOf(workAreaPropsFactory(statsLoggers)) // , s"work-area-$stopsCount"
-  }
-
   private[this] def stopChildren() = {
     stopsCount += 1
-    workArea.foreach(context.stop)
-    statsLoggers.foreach(context.stop)
+    children.foreach(context.stop)
+  }
+
+  private[this] def createChildren() = {
+    def createStatsLogger() = {
+      context.actorOf(statsLoggersFactory(self.taggedWith[FrontendActor]))
+    }
+
+    def createWorkArea(statsLoggers: immutable.Seq[ActorRef]) = {
+      context.actorOf(workAreaPropsFactory(statsLoggers)) // , s"work-area-$stopsCount"
+    }
+
+    statsLoggers = immutable.Seq(createStatsLogger())
+    workArea = Some(createWorkArea(statsLoggers))
+    children = workArea.get +: statsLoggers
+
+    statsLoggers.foreach(_ ! Resume)
+  }
+
+  private[this] def pauseChildren(): Unit = {
+    children.foreach(_ ! Pause)
+  }
+
+  private[this] def resumeChildren(): Unit = {
+    children.foreach(_ ! Resume)
   }
 
   private[this] def sendTo(clientUuid: String, msg: String) = {
@@ -115,13 +115,4 @@ class FrontendActor(timerFreq: FiniteDuration @@ StatsLogger,
     jsonify andThen (_.compactPrint)
   }
 
-  private[this] def pauseChildren(): Unit = {
-    workArea.foreach(_ ! Pause)
-    statsLoggers.foreach(_ ! Pause)
-  }
-
-  private[this] def resumeChildren(): Unit = {
-    workArea.foreach(_ ! Resume)
-    statsLoggers.foreach(_ ! Resume)
-  }
 }

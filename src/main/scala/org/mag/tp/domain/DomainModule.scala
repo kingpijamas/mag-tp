@@ -14,7 +14,7 @@ trait DomainModule {
 
   def employeeGroups: immutable.Seq[employee.Group]
 
-  def employeeTimerFreq: FiniteDuration @@ Employee
+  def employeeTimerFreq: Option[FiniteDuration] @@ Employee
 
   def visibility: Int
 

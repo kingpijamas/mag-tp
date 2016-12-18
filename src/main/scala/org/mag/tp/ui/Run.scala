@@ -8,7 +8,8 @@ import org.mag.tp.domain.{DomainModule, employee}
 import org.mag.tp.util.ProbabilityBag
 
 import scala.collection.immutable
-import scala.concurrent.duration.{FiniteDuration, _}
+import scala.concurrent.duration.{DurationDouble, FiniteDuration}
+import scala.language.postfixOps
 
 object Run {
   def apply(system: ActorSystem, params: Map[String, String]): Run = {
@@ -18,11 +19,13 @@ object Run {
 
     def getDouble(key: String, defaultValue: Double) = params.get(key) map (_.toDouble) getOrElse (defaultValue)
 
+    def getFreq[T](key: String, defaultValue: Double) = Some(getDouble(key, defaultValue).seconds).taggedWith[T]
+
     val employeesMemory = getOptionalInt("employeesMemory")
     val visibility = getInt("visibility", defaultValue = 5)
 
-    val backendTimerFreq = getDouble("backendTimerFreq", defaultValue = 0.2).seconds.taggedWith[Employee]
-    val loggingTimerFreq = getDouble("loggingTimerFreq", defaultValue = 0.7).seconds.taggedWith[StatsLogger]
+    val backendTimerFreq = getFreq[Employee]("backendTimerFreq", defaultValue = 0.2)
+    val loggingTimerFreq = getFreq[StatsLogger]("loggingTimerFreq", defaultValue = 0.7)
 
     val workingGroup = employee.Group(
       id = "workers",
@@ -45,9 +48,10 @@ object Run {
   }
 }
 
+// FIXME turn into case class!
 class Run(val system: ActorSystem,
           val employeeGroups: immutable.Seq[employee.Group],
-          val employeeTimerFreq: FiniteDuration @@ Employee,
+          val employeeTimerFreq: Option[FiniteDuration] @@ Employee,
           val visibility: Int,
-          val statsLoggerTimerFreq: FiniteDuration @@ StatsLogger)
+          val statsLoggerTimerFreq: Option[FiniteDuration] @@ StatsLogger)
   extends DomainModule with FrontendModule

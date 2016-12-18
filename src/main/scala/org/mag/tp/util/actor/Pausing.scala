@@ -12,8 +12,10 @@ trait Pausing extends Actor {
   import context._
 
   def paused: Receive = {
-    case Resume => onPauseEnd()
-    case _ => // ignore it
+    case Resume =>
+      onPauseEnd()
+    case asd: Any => //_ => // ignore it
+      null
   }
 
   def unpaused: Receive = {

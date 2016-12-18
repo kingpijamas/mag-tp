@@ -3,9 +3,10 @@ package org.mag.tp.ui
 import akka.actor.{Actor, ActorRef, actorRef2Scala}
 import com.softwaremill.tagging.@@
 import org.mag.tp.domain.WorkArea.{Action, Loiter, Work}
-import org.mag.tp.domain.{WorkArea, employee}
+import org.mag.tp.domain.employee.Group
+import org.mag.tp.domain.WorkArea
 import org.mag.tp.ui.FrontendActor.StatsLog
-import org.mag.tp.ui.StatsLogger.{FlushLogSummary, GroupActionStats}
+import org.mag.tp.ui.StatsLogger.{FlushLogSummary, GroupActionStats, MultiMap}
 import org.mag.tp.util.actor.{Pausing, Scheduling}
 
 import scala.collection.{immutable, mutable}
@@ -21,21 +22,26 @@ object StatsLogger {
   //  )
 
   case class GroupActionStats(currentCount: Int, changedCount: Int)
+
+  type MultiMap[K, V] = mutable.Map[K, mutable.Buffer[V]]
+
+  object MultiMap {
+    def apply[K, V](): MultiMap[K, V] = mutable.Map()
+  }
 }
 
-class StatsLogger(val employeeGroups: immutable.Seq[employee.Group],
-                  val timerFreq: FiniteDuration @@ StatsLogger,
+class StatsLogger(val timerFreq: Option[FiniteDuration] @@ StatsLogger,
                   val frontend: ActorRef @@ FrontendActor)
   extends Actor with Scheduling with Pausing {
   import context._
 
   def timerMessage: Any = FlushLogSummary
 
-  var prevActionsByGroup = mutable.Map[employee.Group, mutable.Buffer[WorkArea.Action]]()
-  var actionsByGroup = mutable.Map[employee.Group, mutable.Buffer[WorkArea.Action]]()
+  var prevActionsByGroup = MultiMap[Group, Action]()
+  var actionsByGroup = MultiMap[Group, Action]()
 
-  var actionsByEmployee = mutable.Map[ActorRef, mutable.Buffer[WorkArea.Action]]()
-  var prevActionsByEmployee = mutable.Map[ActorRef, mutable.Buffer[WorkArea.Action]]()
+  var prevActionsByEmployee = MultiMap[ActorRef, Action]()
+  var actionsByEmployee = MultiMap[ActorRef, Action]()
 
   def receive: Receive = paused
 
@@ -60,8 +66,8 @@ class StatsLogger(val employeeGroups: immutable.Seq[employee.Group],
       //      }
 
       val actionStats = immutable.Map(
-        "work" -> immutable.Map(statsByGroupId[Work].toSeq: _*),
-        "loiter" -> immutable.Map(statsByGroupId[Loiter].toSeq: _*)
+        "work" -> statsByGroupId[Work],
+        "loiter" -> statsByGroupId[Loiter]
       )
 
       prevActionsByEmployee = actionsByEmployee
