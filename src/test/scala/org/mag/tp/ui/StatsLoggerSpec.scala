@@ -112,8 +112,8 @@ class StatsLoggerSpec extends UnitSpec with ActorSpec with DomainMocks {
 
         frontendActor.expectMsg[StatsLog](
           StatsLog(Map(
-            "work" -> Map(aGroup.id -> GroupActionStats(currentCount = 1, changedCount = 1)),
-            "loiter" -> Map()
+            "work" -> Map(aGroup.id -> GroupActionStats(currentCount = 1, changedCount = 0)),
+            "loiter" -> Map(aGroup.id -> GroupActionStats(0, 0))
           ))
         )
       }
@@ -126,13 +126,16 @@ class StatsLoggerSpec extends UnitSpec with ActorSpec with DomainMocks {
         receiveWork(group = aGroup, employee = anEmployee)
         flushLogs()
 
+        frontendActor.expectMsgType[StatsLog]
+
         receiveWork(group = aGroup, employee = anEmployee)
         flushLogs()
+
 
         frontendActor.expectMsg[StatsLog](
           StatsLog(Map(
             "work" -> Map(aGroup.id -> GroupActionStats(currentCount = 1, changedCount = 0)),
-            "loiter" -> Map()
+            "loiter" -> Map(aGroup.id -> GroupActionStats(0, 0))
           ))
         )
       }
@@ -145,18 +148,15 @@ class StatsLoggerSpec extends UnitSpec with ActorSpec with DomainMocks {
         receiveWork(group = aGroup, employee = anEmployee, times = actionsReceivedPerLog)
         flushLogs()
 
+        frontendActor.expectMsgType[StatsLog]
+
         receiveLoitering(group = aGroup, employee = anEmployee, times = actionsReceivedPerLog)
         flushLogs()
 
         frontendActor.expectMsg[StatsLog](
           StatsLog(Map(
-            "work" -> Map(),
-            "loiter" -> Map(
-              aGroup.id -> GroupActionStats(
-                currentCount = actionsReceivedPerLog,
-                changedCount = 1
-              )
-            )
+            "work" -> Map(aGroup.id -> GroupActionStats(0, 0)),
+            "loiter" -> Map(aGroup.id -> GroupActionStats(currentCount = 1, changedCount = 1))
           ))
         )
       }

@@ -12,6 +12,7 @@ import org.mag.tp.util.actor.{Pausing, Scheduling}
 import scala.collection.{immutable, mutable}
 import scala.concurrent.duration.FiniteDuration
 import scala.reflect.ClassTag
+import scala.reflect._
 
 object StatsLogger {
   case object FlushLogSummary
@@ -80,21 +81,22 @@ class StatsLogger(val timerFreq: Option[FiniteDuration] @@ StatsLogger,
   }
 
   private[this] def statsByGroupId[A: ClassTag]: immutable.Map[String, GroupActionStats] = {
-    val relevantActionsByGroup = state.actionsByGroup filter { case (_, actions) =>
-      isDominant[A](actions)
-    }
-
-    val stats = relevantActionsByGroup map { case (group, actions) =>
+    val groupStats = state.actionsByGroup map { case (group, actions) =>
       val employeesInGroup = actions map (_.employee) toSet
-      val changedEmployeesCount = employeesInGroup count (hasChanged[A](_))
+
+      val relevantEmployeesInGroup = employeesInGroup filter { employee =>
+        isDominant[A](state.actionsByEmployee(employee))
+      }
+
+      val relevantChangedEmployeesCount = relevantEmployeesInGroup count hasChanged[A]
 
       group.id -> GroupActionStats(
-        currentCount = actions.size,
-        changedCount = changedEmployeesCount
+        currentCount = relevantEmployeesInGroup.size,
+        changedCount = relevantChangedEmployeesCount
       )
     }
 
-    immutable.Map(stats.toSeq: _*)
+    immutable.Map(groupStats.toSeq: _*)
   }
 
   private[this] def hasChanged[A: ClassTag](employee: ActorRef): Boolean = {
@@ -102,13 +104,16 @@ class StatsLogger(val timerFreq: Option[FiniteDuration] @@ StatsLogger,
 
     previouslyKnownActions match {
       case Some(actions) => !isDominant[A](actions)
-      case _ => true // TODO: check!
+      case _ => false // TODO: check!
     }
   }
 
-  private[this] def isDominant[A: ClassTag](actions: Traversable[Action]): Boolean = {
-    val actionClass = implicitly[ClassTag[A]].runtimeClass
-    val dominantActionCount = actions count actionClass.isInstance
-    dominantActionCount > (actions.size / 2.0)
-  }
+  private[this] def isDominant[A: ClassTag](actions: Traversable[Action]): Boolean =
+    count[A](actions) > (actions.size / 2.0)
+
+  private[this] def count[A: ClassTag](actions: Traversable[Action]): Int =
+    actions count isInstance[A]
+
+  private[this] def isInstance[A: ClassTag](action: Action) =
+    classTag[A].runtimeClass.isInstance(action)
 }
