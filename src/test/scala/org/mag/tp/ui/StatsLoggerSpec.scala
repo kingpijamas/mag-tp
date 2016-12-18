@@ -4,10 +4,10 @@ import akka.actor.{ActorRef, Props}
 import akka.testkit.TestActorRef
 import com.softwaremill.macwire.wire
 import com.softwaremill.tagging.Tagger
-import org.mag.tp.domain.WorkArea
-import org.mag.tp.domain.WorkArea.{Loiter, Work}
+import org.mag.tp.domain.WorkArea.{Action, Loiter, Work}
 import org.mag.tp.domain.employee.{Employee, Group}
-import org.mag.tp.ui.StatsLogger.MultiMap
+import org.mag.tp.ui.FrontendActor.StatsLog
+import org.mag.tp.ui.StatsLogger.{FlushLogSummary, GroupActionStats, MultiMap}
 import org.mag.tp.util.actor.Pausing.Resume
 import org.mag.tp.{ActorSpec, DomainMocks, UnitSpec}
 
@@ -33,26 +33,33 @@ class StatsLoggerSpec extends UnitSpec with ActorSpec with DomainMocks {
       }
     }
 
-    def rememberLoitering(employee: ActorRef = testRef[Employee],
-                          group: Group = testGroup("testGroup"),
-                          times: Int = 1): Unit = {
+    def receiveLoitering(employee: ActorRef = testRef[Employee],
+                         group: Group = testGroup("testGroup"),
+                         times: Int = 1): Unit = {
       (0 until times).foreach { _ =>
         subjectRef ! Loiter(employee, group)
       }
     }
 
-    def prevActionsByGroup: MultiMap[Group, WorkArea.Action] = subject.prevActionsByGroup
+    def flushLogs(): Unit = {
+      subjectRef ! FlushLogSummary
+    }
 
-    def actionsByGroup: MultiMap[Group, WorkArea.Action] = subject.actionsByGroup
+    def prevActionsByGroup: MultiMap[Group, Action] = subject.prevState.actionsByGroup
 
-    def prevActionsByEmployee: MultiMap[ActorRef, WorkArea.Action] = subject.prevActionsByEmployee
+    def prevActionsByEmployee: MultiMap[ActorRef, Action] = subject.prevState.actionsByEmployee
 
-    def actionsByEmployee: MultiMap[ActorRef, WorkArea.Action] = subject.actionsByEmployee
+    def actionsByGroup: MultiMap[Group, Action] = subject.state.actionsByGroup
+
+    def actionsByEmployee: MultiMap[ActorRef, Action] = subject.state.actionsByEmployee
 
     def sizeOf(mmap: MultiMap[_, _]): Int = mmap.values map (_.size) sum
   }
 
   "A StatsLogger" when {
+    val aGroup = testGroup("A")
+    val anEmployee = testRef[Employee]
+
     "created" should {
       "ignore all messages" in new StatsLoggerTest {
         receiveWork()
@@ -66,23 +73,94 @@ class StatsLoggerSpec extends UnitSpec with ActorSpec with DomainMocks {
         resume()
 
         receiveWork()
-        sizeOf(actionsByGroup) should not be 0
-        sizeOf(actionsByEmployee) should not be 0
+        sizeOf(actionsByGroup) should not be (0)
+        sizeOf(actionsByEmployee) should not be (0)
       }
 
       "register the actions it receives" in new StatsLoggerTest {
         resume()
 
-        val aGroup = testGroup("A")
-        val anEmployee = testRef[Employee]
         receiveWork(employee = anEmployee, group = aGroup)
 
-        actionsByGroup.get(aGroup) should not be None
-        actionsByEmployee.get(anEmployee) should not be None
+        actionsByGroup.get(aGroup) should not be (None)
+        actionsByEmployee.get(anEmployee) should not be (None)
       }
     }
 
+    "flushed" should {
+      "not forget its current state" in new StatsLoggerTest {
+        resume()
 
+        receiveWork(employee = anEmployee, group = aGroup)
+
+        flushLogs()
+
+        prevActionsByGroup.get(aGroup) should not be (None)
+        prevActionsByEmployee.get(anEmployee) should not be (None)
+        actionsByGroup.get(aGroup) should be(None)
+        actionsByEmployee.get(anEmployee) should be(None)
+      }
+    }
+
+    "presented with Actions by Employees it doesn't know" should {
+      "mark them as 'changed' in its log" in new StatsLoggerTest {
+        resume()
+
+        receiveWork(group = aGroup)
+
+        flushLogs()
+
+        frontendActor.expectMsg[StatsLog](
+          StatsLog(Map(
+            "work" -> Map(aGroup.id -> GroupActionStats(currentCount = 1, changedCount = 1)),
+            "loiter" -> Map()
+          ))
+        )
+      }
+    }
+
+    "presented with Actions by Employees it does know" should {
+      "not mark them as 'changed' in its log if they maintain their previous tendency" in new StatsLoggerTest {
+        resume()
+
+        receiveWork(group = aGroup, employee = anEmployee)
+        flushLogs()
+
+        receiveWork(group = aGroup, employee = anEmployee)
+        flushLogs()
+
+        frontendActor.expectMsg[StatsLog](
+          StatsLog(Map(
+            "work" -> Map(aGroup.id -> GroupActionStats(currentCount = 1, changedCount = 0)),
+            "loiter" -> Map()
+          ))
+        )
+      }
+
+      "mark them as 'changed' in its log if they change their previous tendency" in new StatsLoggerTest {
+        resume()
+
+        val actionsReceivedPerLog = 5
+
+        receiveWork(group = aGroup, employee = anEmployee, times = actionsReceivedPerLog)
+        flushLogs()
+
+        receiveLoitering(group = aGroup, employee = anEmployee, times = actionsReceivedPerLog)
+        flushLogs()
+
+        frontendActor.expectMsg[StatsLog](
+          StatsLog(Map(
+            "work" -> Map(),
+            "loiter" -> Map(
+              aGroup.id -> GroupActionStats(
+                currentCount = actionsReceivedPerLog,
+                changedCount = 1
+              )
+            )
+          ))
+        )
+      }
+    }
   }
 
 }
