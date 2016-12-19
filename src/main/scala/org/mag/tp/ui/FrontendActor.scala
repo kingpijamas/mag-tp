@@ -56,12 +56,12 @@ class FrontendActor(timerFreq: Option[FiniteDuration] @@ StatsLogger,
 
     case Resume => resumeChildren()
 
-    case SimulationStep =>
-      timerFreq.foreach { freq =>
-        pauseChildren()
-        context.system.scheduler.scheduleOnce(freq) { resumeChildren() }
-        context.system.scheduler.scheduleOnce(freq * 2) { pauseChildren() }
-      }
+    case SimulationStep if timerFreq.isDefined =>
+      pauseChildren()
+      val freq = timerFreq.get
+      val scheduler = context.system.scheduler
+      scheduler.scheduleOnce(freq) { resumeChildren() }
+      scheduler.scheduleOnce(freq * 2) { pauseChildren() }
 
     case StopSimulation =>
       stopChildren()
