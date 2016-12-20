@@ -7,16 +7,14 @@ import org.mag.tp.MagTpStack
 import org.mag.tp.controller.UIController.RunParams
 import org.mag.tp.ui.FrontendActor.{ClientConnected, SimulationStep, StartSimulation}
 import org.mag.tp.ui.Run
-import org.mag.tp.ui.StatsLogger.GroupActionStats
 import org.mag.tp.util.actor.Pausing.{Pause, Resume}
 import org.scalatra.SessionSupport
 import org.scalatra.atmosphere.{AtmosphereClient, AtmosphereSupport, Disconnected, Error, JsonMessage}
 import org.scalatra.json.{JValueResult, JacksonJsonSupport}
+import spray.json.DefaultJsonProtocol._
 import spray.json._
-import DefaultJsonProtocol._ // if you don't supply your own Protocol (see below)
 
-import scala.collection.mutable
-import scala.collection.immutable
+import scala.collection.{immutable, mutable}
 
 object UIController {
   case class GroupParams(name: String,
@@ -31,7 +29,9 @@ object UIController {
                        backendTimerFreq: Option[String],
                        loggingTimerFreq: Option[String])
 
-  implicit protected val jsonFormats: Formats = DefaultFormats // XXX move!
+  implicit protected val jsonFormats: Formats = DefaultFormats
+
+  // XXX move!
   // FIXME: these two shouldn't be necessary!
   implicit val GroupParamsFormatter = jsonFormat5(GroupParams)
   implicit val RunParamsFormatter = jsonFormat5(RunParams)
@@ -68,21 +68,13 @@ class UIController(system: ActorSystem) extends MagTpStack
   }
 
   post("/restart") {
-    resetFrontendActor()
-    frontendActor.foreach(_ ! StartSimulation)
-  }
-
-  //  post("/stop") {
-  //    frontendActor.foreach(_ ! StopSimulation)
-  //    resetFrontendActor()
-  //  }
-
-  private[this] def resetFrontendActor(): Unit = {
     // XXX
     frontendActor.foreach(system.stop(_))
     val _frontendActor = currentRun.get.createFrontendActor()
     frontendActor = Some(_frontendActor)
     clientUuids.foreach(_frontendActor ! ClientConnected(_))
+
+    frontendActor.foreach(_ ! StartSimulation)
   }
 
   post("/pause") {
