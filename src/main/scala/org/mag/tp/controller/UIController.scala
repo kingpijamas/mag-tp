@@ -4,14 +4,38 @@ import akka.actor.Actor._
 import akka.actor.{ActorRef, ActorSystem}
 import org.json4s.{DefaultFormats, Formats}
 import org.mag.tp.MagTpStack
+import org.mag.tp.controller.UIController.RunParams
 import org.mag.tp.ui.FrontendActor.{ClientConnected, SimulationStep, StartSimulation}
 import org.mag.tp.ui.Run
+import org.mag.tp.ui.StatsLogger.GroupActionStats
 import org.mag.tp.util.actor.Pausing.{Pause, Resume}
 import org.scalatra.SessionSupport
 import org.scalatra.atmosphere.{AtmosphereClient, AtmosphereSupport, Disconnected, Error, JsonMessage}
 import org.scalatra.json.{JValueResult, JacksonJsonSupport}
+import spray.json._
+import DefaultJsonProtocol._ // if you don't supply your own Protocol (see below)
 
 import scala.collection.mutable
+import scala.collection.immutable
+
+object UIController {
+  case class GroupParams(name: String,
+                         count: Option[String],
+                         workProbability: Option[String],
+                         loiteringProbability: Option[String],
+                         permeability: Option[String])
+
+  case class RunParams(employeesMemory: Option[String],
+                       visibility: Option[String],
+                       groups: immutable.Seq[GroupParams],
+                       backendTimerFreq: Option[String],
+                       loggingTimerFreq: Option[String])
+
+  implicit protected val jsonFormats: Formats = DefaultFormats // XXX move!
+  // FIXME: these two shouldn't be necessary!
+  implicit val GroupParamsFormatter = jsonFormat5(GroupParams)
+  implicit val RunParamsFormatter = jsonFormat5(RunParams)
+}
 
 class UIController(system: ActorSystem) extends MagTpStack
   with JValueResult
@@ -19,7 +43,7 @@ class UIController(system: ActorSystem) extends MagTpStack
   with SessionSupport
   with AtmosphereSupport {
 
-  implicit protected val jsonFormats: Formats = DefaultFormats // XXX move!
+  implicit protected def jsonFormats: Formats = DefaultFormats // XXX move!
 
   private var currentRun: Option[Run] = None
   private var frontendActor: Option[ActorRef] = None
@@ -36,10 +60,9 @@ class UIController(system: ActorSystem) extends MagTpStack
   post("/simulation") {
     contentType = "text/html"
 
-    println(params.toMap)
-    val cleanParams = params filter { case (_, value) => !value.isEmpty }
+    val parameters = params.keys.head.parseJson.convertTo[RunParams]
+    currentRun = Some(Run(system, parameters))
 
-    currentRun = Some(Run(system, cleanParams))
     jade("simulation.jade")
   }
 

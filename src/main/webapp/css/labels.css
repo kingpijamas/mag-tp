@@ -24,7 +24,3 @@
 .form-control {
     width: 100px;
 }
-
-.form-inline > * {
-    margin: 5px 3px;
-}

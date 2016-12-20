@@ -1,9 +1,9 @@
 package org.mag.tp.ui
 
 import akka.actor.ActorSystem
-import com.softwaremill.macwire.wire
 import com.softwaremill.tagging.{@@, Tagger}
-import org.mag.tp.domain.employee.{Employee, LoiterBehaviour, WorkBehaviour}
+import org.mag.tp.controller.UIController.{GroupParams, RunParams}
+import org.mag.tp.domain.employee.{WorkBehaviour, _}
 import org.mag.tp.domain.{DomainModule, employee}
 import org.mag.tp.util.ProbabilityBag
 
@@ -12,42 +12,53 @@ import scala.concurrent.duration.{DurationDouble, FiniteDuration}
 import scala.language.postfixOps
 
 object Run {
-  val DefaultBackendTimerFreq = 0.2
-  val DefaultFrontendTimerFreq = 0.7
+  val DefaultVisibility = 5
 
-  def apply(system: ActorSystem, params: Map[String, String]): Run = {
-    def getOptionalInt(key: String) = params.get(key) map (_.toInt)
+  val DefaultTargetSize = 0
+  val DefaultWorkProbability = 0.5
+  val DefaultLoiteringProbability = 0.5
 
-    def getInt(key: String, defaultValue: Int) = getOptionalInt(key) getOrElse (defaultValue)
+  val DefaultBackendTimerFreq = 0.2 seconds
+  val DefaultFrontendTimerFreq = 0.7 seconds
 
-    def getDouble(key: String, defaultValue: Double) = params.get(key) map (_.toDouble) getOrElse (defaultValue)
+  def apply(system: ActorSystem, params: RunParams): Run = {
+    def asInt(param: Option[String], default: Int): Int =
+      param map (_.toInt) getOrElse (default)
 
-    def getFreq[T](key: String, defaultValue: Double) = Some(getDouble(key, defaultValue).seconds).taggedWith[T]
+    def asDouble(param: Option[String], default: Double): Double =
+      param map (_.toDouble) getOrElse (default)
 
-    val employeesMemory = getOptionalInt("employeesMemory")
-    val visibility = getInt("visibility", defaultValue = 5)
+    def asDuration(param: Option[String], default: FiniteDuration): FiniteDuration =
+      param map (_.toDouble.seconds) getOrElse (default)
 
-    val backendTimerFreq = getFreq[Employee]("backendTimerFreq", defaultValue = DefaultBackendTimerFreq)
-    val loggingTimerFreq = getFreq[StatsLogger]("loggingTimerFreq", defaultValue = DefaultFrontendTimerFreq)
+    val maxMemories = params.employeesMemory map (_.toInt)
 
-    val workingGroup = employee.Group(
-      id = "workers",
-      targetSize = getInt("workersCount", defaultValue = 500),
-      permeability = getDouble("workersPermeability", defaultValue = 0.5),
-      maxMemories = employeesMemory,
-      baseBehaviours = ProbabilityBag.complete[employee.Behaviour](WorkBehaviour -> 1, LoiterBehaviour -> 0)
+    val groups = params.groups map {
+      case GroupParams(name, count, workProbability, loiteringProbability, permeability) =>
+        val behaviours = ProbabilityBag.complete[Behaviour](
+          WorkBehaviour -> asDouble(workProbability, DefaultWorkProbability),
+          LoiterBehaviour -> asDouble(loiteringProbability, DefaultLoiteringProbability)
+        )
+
+        Group(id = name,
+          targetSize = asInt(count, DefaultTargetSize),
+          permeability = permeability.get.toDouble,
+          maxMemories = maxMemories,
+          baseBehaviours = behaviours)
+    }
+
+    val visibility = asInt(params.visibility, default = DefaultVisibility)
+
+    val employeeTimerFreq = asDuration(params.backendTimerFreq, DefaultBackendTimerFreq)
+    val statsLoggerTimerFreq = asDuration(params.loggingTimerFreq, DefaultFrontendTimerFreq)
+
+    new Run(
+      system = system,
+      employeeGroups = groups,
+      visibility = visibility,
+      employeeTimerFreq = Some(employeeTimerFreq).taggedWith[Employee],
+      statsLoggerTimerFreq = Some(statsLoggerTimerFreq).taggedWith[StatsLogger]
     )
-    val loiteringGroup = employee.Group(
-      id = "loiterers",
-      targetSize = getInt("loiterersCount", defaultValue = 500),
-      permeability = getDouble("loiterersPermeability", defaultValue = 0),
-      maxMemories = employeesMemory,
-      baseBehaviours = ProbabilityBag.complete[employee.Behaviour](WorkBehaviour -> 0, LoiterBehaviour -> 1)
-    )
-
-    val groups = immutable.Seq(workingGroup, loiteringGroup)
-
-    wire[Run]
   }
 }
 
