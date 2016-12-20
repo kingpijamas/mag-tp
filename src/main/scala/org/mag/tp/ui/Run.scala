@@ -15,6 +15,7 @@ object Run {
   val DefaultVisibility = 5
 
   val DefaultTargetSize = 0
+  val DefaultPermeability = 0.5
   val DefaultWorkProbability = 0.5
   val DefaultLoiteringProbability = 0.5
 
@@ -43,7 +44,7 @@ object Run {
 
         Group(id = name,
           targetSize = asInt(count, DefaultTargetSize),
-          permeability = permeability.get.toDouble,
+          permeability = asDouble(permeability, DefaultPermeability),
           maxMemories = maxMemories,
           baseBehaviours = behaviours)
     }
