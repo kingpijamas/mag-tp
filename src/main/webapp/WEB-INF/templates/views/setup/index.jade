@@ -1,31 +1,6 @@
 - attributes("title") = "TP Multiagentes"
 
-div#group-form-template(style="visibility:hidden;")
-  div.form-inline
-    div.form-group
-      div.col-md-12
-        input.form-control.group-name(name="name" type="text")
-
-    div.form-group
-      div.col-md-12
-        input.form-control.group-name(name="count" type="number" placeholder="0")
-
-    div.form-group
-      div.col-md-12
-        input.form-control(name="workProbability" type="text" placeholder="0.5")
-
-    div.form-group
-      div.col-md-12
-        input.form-control(name="loiteringProbability" type="text" placeholder="0.5")
-
-    div.form-group
-      div.col-md-12
-        input.form-control(name="permeability" type="text" placeholder="0.5")
-
-    div.form-group
-      div.col-md-12
-        button.delete-group-btn.btn.btn-default(type="button")
-          .glyphicon.glyphicon-remove(aria-hidden="true")
+- render("_group-form-template.jade")
 
 .container
   h1 Trabajo Práctico Multiagentes
@@ -33,18 +8,18 @@ div#group-form-template(style="visibility:hidden;")
   form#simulation-params-form.form-horizontal(action="/simulation" method="post")
     h3 Parámetros generales
 
-    div.form-group
+    .form-group
       label.col-md-4(for="employees-memory") Memoria de los empleados (# de acciones)
-      div.col-md-3
+      .col-md-3
         input.form-control#employees-memory(name="employeesMemory" type="number" placeholder="Infinita")
 
-    div.form-group
+    .form-group
       label.col-md-4(for="visibility") Visibilidad (# de testigos para cada acción)
-      div.col-md-3
+      .col-md-3
         input.form-control#visibility(name="visibility" type="number" placeholder="5")
 
-    div.form-group
-      div.col-md-5
+    .form-group
+      .col-md-5
         hr
 
     h3
@@ -52,31 +27,31 @@ div#group-form-template(style="visibility:hidden;")
       span#add-group-form.btn.btn-default(type="button")
         .glyphicon.glyphicon-plus(aria-hidden="true")
 
-    div.form-group
-      div.col-md-12#group-forms
-        div.form-group
-          div.col-md-12
+    .form-group
+      .col-md-12#group-forms
+        .form-group
+          .col-md-12
             label.col-md-2 Nombre
             label.col-md-2 Cant. empleados
             label.col-md-2 Prob. trabajar
             label.col-md-2 Prob. holgazanear
             label.col-md-2 Permeabilidad
 
-    div.form-group
-      div.col-md-5
+    .form-group
+      .col-md-5
         hr
 
     h3 Parámetros de performance
-    div.form-group
+    .form-group
       label.col-md-4(for="backend-timer-freq") Frecuencia backend (seg.)
-      div.col-md-3
+      .col-md-3
         input.form-control#backend-timer-freq(name="backendTimerFreq" type="text" placeholder="0.2")
 
-    div.form-group
+    .form-group
       label.col-md-4(for="logging-timer-freq") Frecuencia logging (seg.)
-      div.col-md-3
+      .col-md-3
         input.form-control#logging-timer-freq(name="loggingTimerFreq" type="text" placeholder="0.7")
 
-    div.form-group
-      div.col-md-offset-2.col-md-10
+    .form-group
+      .col-md-offset-2.col-md-10
         button.btn.btn-primary(type="submit") Confirmar parámetros

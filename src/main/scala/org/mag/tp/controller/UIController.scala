@@ -54,7 +54,7 @@ class UIController(system: ActorSystem) extends MagTpStack
 
     frontendActor.foreach(system.stop)
 
-    jade("setup.jade")
+    jade("setup/index.jade")
   }
 
   post("/simulation") {
@@ -64,7 +64,7 @@ class UIController(system: ActorSystem) extends MagTpStack
     val parameters = params("json").parseJson.convertTo[RunParams]
     currentRun = Some(Run(system, parameters))
 
-    jade("simulation.jade")
+    jade("simulation/index.jade")
   }
 
   post("/restart") {

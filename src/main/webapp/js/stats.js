@@ -19,7 +19,7 @@ function subscribeStatsListener(listenerUpdater) {
 function _accumulateAttributeInChildren(obj, attributeKey, defaultValue) {
     let accumulation = defaultValue;
     for (let [_, child] of _attributes(obj)) {
-      accumulation += child[attributeKey];
+        accumulation += child[attributeKey];
     }
     return accumulation;
 }

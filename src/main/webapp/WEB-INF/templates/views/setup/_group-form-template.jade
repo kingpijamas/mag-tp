@@ -1,0 +1,26 @@
+div#group-form-template(style="visibility:hidden;")
+  div.form-inline
+    div.form-group
+      div.col-md-12
+        input.form-control.group-name(name="name" type="text")
+
+    div.form-group
+      div.col-md-12
+        input.form-control.group-name(name="count" type="number" placeholder="0")
+
+    div.form-group
+      div.col-md-12
+        input.form-control(name="workProbability" type="text" placeholder="0.5")
+
+    div.form-group
+      div.col-md-12
+        input.form-control(name="loiteringProbability" type="text" placeholder="0.5")
+
+    div.form-group
+      div.col-md-12
+        input.form-control(name="permeability" type="text" placeholder="0.5")
+
+    div.form-group
+      div.col-md-12
+        button.delete-group-btn.btn.btn-default(type="button")
+          .glyphicon.glyphicon-remove(aria-hidden="true")
