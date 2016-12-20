@@ -60,7 +60,8 @@ class UIController(system: ActorSystem) extends MagTpStack
   post("/simulation") {
     contentType = "text/html"
 
-    val parameters = params.keys.head.parseJson.convertTo[RunParams]
+    // XXX
+    val parameters = params("json").parseJson.convertTo[RunParams]
     currentRun = Some(Run(system, parameters))
 
     jade("simulation.jade")

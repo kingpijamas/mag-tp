@@ -22,6 +22,7 @@ object Run {
   val DefaultFrontendTimerFreq = 0.7 seconds
 
   def apply(system: ActorSystem, params: RunParams): Run = {
+    // FIXME: apparently Scalatra has validators/converters of its own, change this!
     def asInt(param: Option[String], default: Int): Int =
       param map (_.toInt) getOrElse (default)
 

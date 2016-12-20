@@ -13,30 +13,22 @@ $(() => {
 });
 
 function _onFormSubmit(event) {
-    event.preventDefault();
-    const data = $(this).serializeObject();
+    // event.preventDefault();
+    const form = $(this)
+    const data = form.serializeObject();
     const cleanData = JSON.stringify(data, (key, value) => {
-      if (value === "") {
+      if (value === '') {
         return undefined;
       }
       return value;
     });
 
-    $.ajax({
-        type: 'POST',
-        url: 'simulation',
-        data: cleanData, // FIXME: turn into key-value!
-        success: _reloadPage,
-        error: _onError
-    })
-}
-
-function _reloadPage(response) {
-    $("html").html(response)
-}
-
-function _onError(jqXHR, textStatus, errorThrown) {
-    debugger
+    // FIXME: horrible hack to bypass not supporting extended urlEncoded forms
+    $('<input>').attr({
+        type: 'hidden',
+        name: 'json',
+        value: cleanData
+    }).appendTo(form);
 }
 
 function _addGroupForm() {
