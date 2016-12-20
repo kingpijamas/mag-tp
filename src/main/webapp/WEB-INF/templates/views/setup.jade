@@ -1,19 +1,37 @@
 - attributes("title") = "TP Multiagentes"
 
+div#group-form-template(style="visibility:hidden;")
+  div.form-inline
+    div.form-group
+      div.col-md-12
+        input.form-control.group-name(name="name" type="text")
+
+    div.form-group
+      div.col-md-12
+        input.form-control.group-name(name="count" type="number" placeholder="0")
+
+    div.form-group
+      div.col-md-12
+        input.form-control(name="workProbability" type="text" placeholder="0.5")
+
+    div.form-group
+      div.col-md-12
+        input.form-control(name="loiteringProbability" type="text" placeholder="0.5")
+
+    div.form-group
+      div.col-md-12
+        input.form-control(name="permeability" type="text" placeholder="0.5")
+
+    div.form-group
+      div.col-md-12
+        button.delete-group-btn.btn.btn-default(type="button")
+          .glyphicon.glyphicon-remove(aria-hidden="true")
+
 .container
   h1 Trabajo Práctico Multiagentes
 
   form.form-horizontal(action="/simulation" method="post")
     h3 Parámetros generales
-    div.form-group
-      label.col-md-4(for="workers-count") Trabajadores iniciales
-      div.col-md-3
-        input.form-control#workers-count(name="workersCount" type="number" placeholder="500")
-
-    div.form-group
-      label.col-md-4(for="loiterers-count") Holgazanes iniciales
-      div.col-md-3
-        input.form-control#loiterers-count(name="loiterersCount" type="number" placeholder="500")
 
     div.form-group
       label.col-md-4(for="employees-memory") Memoria de los empleados (# de acciones)
@@ -26,14 +44,23 @@
         input.form-control#visibility(name="visibility" type="number" placeholder="5")
 
     div.form-group
-      label.col-md-4(for="workers-permeability") Permeabilidad de los trabajadores
-      div.col-md-3
-        input.form-control#workers-permeability(name="workersPermeability" type="text" placeholder="0.5")
+      div.col-md-5
+        hr
+
+    h3
+      &= "Grupos de empleados"
+      span#add-group-form.btn.btn-default(type="button")
+        .glyphicon.glyphicon-plus(aria-hidden="true")
 
     div.form-group
-      label.col-md-4(for="loiterers-permeability") Permeabilidad de los holgazanes
-      div.col-md-3
-        input.form-control#loiterers-permeability(name="loiterersPermeability" type="text" placeholder="0")
+      div.col-md-12#group-forms
+        div.form-group
+          div.col-md-12
+            label.col-md-2 Nombre
+            label.col-md-2 Cant. empleados
+            label.col-md-2 Prob. trabajar
+            label.col-md-2 Prob. holgazanear
+            label.col-md-2 Permeabilidad
 
     div.form-group
       div.col-md-5

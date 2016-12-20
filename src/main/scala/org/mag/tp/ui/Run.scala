@@ -12,6 +12,9 @@ import scala.concurrent.duration.{DurationDouble, FiniteDuration}
 import scala.language.postfixOps
 
 object Run {
+  val DefaultBackendTimerFreq = 0.2
+  val DefaultFrontendTimerFreq = 0.7
+
   def apply(system: ActorSystem, params: Map[String, String]): Run = {
     def getOptionalInt(key: String) = params.get(key) map (_.toInt)
 
@@ -24,8 +27,8 @@ object Run {
     val employeesMemory = getOptionalInt("employeesMemory")
     val visibility = getInt("visibility", defaultValue = 5)
 
-    val backendTimerFreq = getFreq[Employee]("backendTimerFreq", defaultValue = 0.2)
-    val loggingTimerFreq = getFreq[StatsLogger]("loggingTimerFreq", defaultValue = 0.7)
+    val backendTimerFreq = getFreq[Employee]("backendTimerFreq", defaultValue = DefaultBackendTimerFreq)
+    val loggingTimerFreq = getFreq[StatsLogger]("loggingTimerFreq", defaultValue = DefaultFrontendTimerFreq)
 
     val workingGroup = employee.Group(
       id = "workers",
