@@ -24,3 +24,11 @@
 .form-control {
     width: 100px;
 }
+
+.new-workers .line {
+  stroke: #1F77B4 !important;
+}
+
+.new-loiterers .line {
+  stroke: #FF850A !important;
+}

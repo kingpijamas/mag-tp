@@ -8,8 +8,8 @@ function updateStats(data) {
     const loiteringStats = data.stats.loiter;
     _stats.workersCount = _accumulateAttributeInChildren(workStats, 'currentCount', 0);
     _stats.loiterersCount = _accumulateAttributeInChildren(loiteringStats, 'currentCount', 0);
-    _stats.changedToWorkCount = _accumulateAttributeInChildren(workStats, 'changedCount', 0);
-    _stats.changedToLoiteringCount = _accumulateAttributeInChildren(loiteringStats, 'changedCount', 0);
+    _stats.changedToCount.work = _accumulateAttributeInChildren(workStats, 'changedCount', 0);
+    _stats.changedToCount.loitering = _accumulateAttributeInChildren(loiteringStats, 'changedCount', 0);
 
     _stats.listenerUpdaters.forEach((listenerUpdater) => listenerUpdater.call(this, _stats));
 }
@@ -41,6 +41,9 @@ $(function() {
     _stats = {
         ticks: 0,
         listenerUpdaters: [],
-        accumKey: 'accum'
+        accumKey: 'accum',
+        changedToCount: {},
+        // XXX
+        totalEmployeesCount: parseInt($('#employees-count').val())
     };
 })

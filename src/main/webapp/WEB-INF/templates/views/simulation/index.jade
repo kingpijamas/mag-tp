@@ -2,6 +2,8 @@
 -@ val employeesCount: Int
 -@ val groupNames: Seq[String]
 
+input#employees-count(type="number" value="#{employeesCount}" style="visibility:hidden;")
+
 .container
   .row.col-md-12
     - render("_controls.jade")
@@ -13,4 +15,9 @@
 
     .col-md-8
       - render("_area-chart.jade")
-      - render("_changed-chart.jade")
+
+      .row
+        .col-md-6
+          - render("_changed-chart.jade", Map("action" -> "work", "actionDisplayName" -> "trabajadores", "labelName" -> "Nuevos trab.", "colourHex" -> "#1F77B4"))
+        .col-md-6
+          - render("_changed-chart.jade", Map("action" -> "loitering", "actionDisplayName" -> "holgazanes", "labelName" -> "Nuevos holg.", "colourHex" -> "#FF850A"))

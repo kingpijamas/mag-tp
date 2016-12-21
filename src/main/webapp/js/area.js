@@ -18,7 +18,8 @@ $(function () {
     _areaChart.chart = $('#area-chart').epoch({
         type: 'area',
         data: _areaChart.data,
-        axes: ['left', 'right', 'bottom']
+        axes: ['left', 'right', 'bottom'],
+        range: [0, _stats.totalEmployeesCount]
     });
 
     subscribeStatsListener(_updateAreaChartData);
