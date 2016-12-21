@@ -1,3 +1,14 @@
-h4 Trabajadores vs holgazanes (tiempo real)
+-@ val selectId: Int
+-@ val groupNames: Seq[String]
+
 .row
-  #pie-chart.epoch(style="width: 200px; height: 200px")
+  .col-md-2
+    strong Grupo:
+
+  .col-md-2
+    select.pie-chart-select.form-control(group-select-id="#{selectId}")
+      - for(groupName <- ("Todos" +: groupNames))
+        option= groupName
+
+.row
+  .epoch(id="pie-chart-#{selectId}" style="width: 200px; height: 200px")

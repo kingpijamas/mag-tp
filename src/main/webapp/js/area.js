@@ -1,8 +1,8 @@
 var _areaChart = null;
 
 function _updateAreaChartData(stats) {
-    _areaChart.data[0].values.push({x: stats.ticks, y: stats.workersCount});
-    _areaChart.data[1].values.push({x: stats.ticks, y: stats.loiterersCount});
+    _areaChart.data[0].values.push({x: stats.ticks, y: stats.workersCount.accum});
+    _areaChart.data[1].values.push({x: stats.ticks, y: stats.loiterersCount.accum});
     _areaChart.chart.update(_areaChart.data);
 }
 

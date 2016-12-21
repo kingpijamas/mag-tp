@@ -62,9 +62,10 @@ class UIController(system: ActorSystem) extends MagTpStack
 
     // XXX
     val parameters = params("json").parseJson.convertTo[RunParams]
-    currentRun = Some(Run(system, parameters))
+    val run = Run(system, parameters)
+    currentRun = Some(run)
 
-    jade("simulation/index.jade")
+    jade("simulation/index.jade", "employeesCount" -> run.employeesCount, "groupNames" -> run.groupNames)
   }
 
   post("/restart") {

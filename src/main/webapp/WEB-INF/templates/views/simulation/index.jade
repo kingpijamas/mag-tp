@@ -1,4 +1,6 @@
 - attributes("title") = "TP Multiagentes"
+-@ val employeesCount: Int
+-@ val groupNames: Seq[String]
 
 .container
   .row.col-md-12
@@ -6,8 +8,7 @@
 
   .row
     .col-md-4
-      - render("_pie-chart.jade")
-
+      - render("_pie-charts.jade", Map("groupNames" -> groupNames))
       - render("_counters.jade")
 
     .col-md-8

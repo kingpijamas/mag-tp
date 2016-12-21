@@ -3,8 +3,8 @@ var _counters = null;
 function _updateCounterData(stats) {
     _counters.ticks++;
 
-    const workersCount = stats.workersCount;
-    const loiterersCount = stats.loiterersCount;
+    const workersCount = stats.workersCount.accum;
+    const loiterersCount = stats.loiterersCount.accum;
     const total = workersCount + loiterersCount;
 
     if ((workersCount / total) >= _counters.limit) {

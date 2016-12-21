@@ -70,4 +70,8 @@ class Run(val system: ActorSystem,
           val employeeTimerFreq: Option[FiniteDuration] @@ Employee,
           val visibility: Int,
           val statsLoggerTimerFreq: Option[FiniteDuration] @@ StatsLogger)
-  extends DomainModule with FrontendModule
+  extends DomainModule with FrontendModule {
+
+  val employeesCount: Int = employeeGroups map (_.targetSize) sum
+  val groupNames: Traversable[String] = employeeGroups map (_.id)
+}

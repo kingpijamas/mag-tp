@@ -3,12 +3,14 @@ var _stats = null;
 function updateStats(data) {
     if (data.type != 'statsLog') { return; }
     _stats.ticks++;
+
     const workStats = data.stats.work;
     const loiteringStats = data.stats.loiter;
     _stats.workersCount = _accumulateAttributeInChildren(workStats, 'currentCount', 0);
     _stats.loiterersCount = _accumulateAttributeInChildren(loiteringStats, 'currentCount', 0);
     _stats.changedToWorkCount = _accumulateAttributeInChildren(workStats, 'changedCount', 0);
     _stats.changedToLoiteringCount = _accumulateAttributeInChildren(loiteringStats, 'changedCount', 0);
+
     _stats.listenerUpdaters.forEach((listenerUpdater) => listenerUpdater.call(this, _stats));
 }
 
@@ -17,11 +19,18 @@ function subscribeStatsListener(listenerUpdater) {
 }
 
 function _accumulateAttributeInChildren(obj, attributeKey, defaultValue) {
+    result = {};
     let accumulation = defaultValue;
-    for (let [_, child] of _attributes(obj)) {
-        accumulation += child[attributeKey];
+    for (let [key, child] of _attributes(obj)) {
+        let attributeValue = child[attributeKey];
+        if (!attributeValue) {
+            attributeValue = defaultValue;
+        }
+        result[key] = attributeValue;
+        accumulation += attributeValue;
     }
-    return accumulation;
+    result.accum = accumulation;
+    return result;
 }
 
 function _attributes(obj) {
@@ -31,6 +40,7 @@ function _attributes(obj) {
 $(function() {
     _stats = {
         ticks: 0,
-        listenerUpdaters: []
+        listenerUpdaters: [],
+        accumKey: 'accum'
     };
 })

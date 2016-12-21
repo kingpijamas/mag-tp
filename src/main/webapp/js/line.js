@@ -1,8 +1,8 @@
 var _lineChart = null;
 
 function _updateLineChartData(stats) {
-    _lineChart.data[0].values.push({x: stats.ticks, y: stats.changedToWorkCount});
-    _lineChart.data[1].values.push({x: stats.ticks, y: stats.changedToLoiteringCount});
+    _lineChart.data[0].values.push({x: stats.ticks, y: stats.changedToWorkCount.accum});
+    _lineChart.data[1].values.push({x: stats.ticks, y: stats.changedToLoiteringCount.accum});
     _lineChart.chart.update(_lineChart.data);
 }
 
