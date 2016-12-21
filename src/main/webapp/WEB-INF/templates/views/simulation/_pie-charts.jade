@@ -2,5 +2,8 @@
 
 h4 Trabajadores vs holgazanes (tiempo real)
 
-- render("_pie-chart.jade", Map("selectId" -> 0, "groupNames" -> groupNames))
-- render("_pie-chart.jade", Map("selectId" -> 1, "groupNames" -> groupNames))
+.col-md-6
+  - render("_pie-chart.jade", Map("selectId" -> 0, "groupNames" -> groupNames))
+
+.col-md-6
+  - render("_pie-chart.jade", Map("selectId" -> 1, "groupNames" -> groupNames))

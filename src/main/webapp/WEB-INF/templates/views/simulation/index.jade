@@ -10,8 +10,12 @@ input#employees-count(type="number" value="#{employeesCount}" style="visibility:
 
   .row
     .col-md-4
-      - render("_pie-charts.jade", Map("groupNames" -> groupNames))
-      - render("_counters.jade")
+      .row
+        - render("_pie-charts.jade", Map("groupNames" -> groupNames))
+
+      .row(style="margin-top: 7em;")
+        .col-md-12
+          - render("_counters.jade")
 
     .col-md-8
       - render("_area-chart.jade")
@@ -19,5 +23,6 @@ input#employees-count(type="number" value="#{employeesCount}" style="visibility:
       .row
         .col-md-6
           - render("_changed-chart.jade", Map("action" -> "work", "actionDisplayName" -> "trabajadores", "labelName" -> "Nuevos trab.", "colourHex" -> "#1F77B4"))
+
         .col-md-6
           - render("_changed-chart.jade", Map("action" -> "loitering", "actionDisplayName" -> "holgazanes", "labelName" -> "Nuevos holg.", "colourHex" -> "#FF850A"))
